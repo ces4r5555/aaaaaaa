@@ -76,6 +76,39 @@ export default function MateriasScreen() {
             { id: '5', date: new Date('2024-01-18'), studyTime: 90, questionsTotal: 30, questionsCorrect: 25 },
           ]
         },
+        { 
+          id: '1-4', 
+          name: 'Poder Executivo', 
+          studyTime: 75, 
+          questionsTotal: 25, 
+          questionsCorrect: 20, 
+          difficulty: 'medium',
+          studyRecords: [
+            { id: '6', date: new Date('2024-01-19'), studyTime: 75, questionsTotal: 25, questionsCorrect: 20 },
+          ]
+        },
+        { 
+          id: '1-5', 
+          name: 'Poder Legislativo', 
+          studyTime: 60, 
+          questionsTotal: 20, 
+          questionsCorrect: 18, 
+          difficulty: 'easy',
+          studyRecords: [
+            { id: '7', date: new Date('2024-01-20'), studyTime: 60, questionsTotal: 20, questionsCorrect: 18 },
+          ]
+        },
+        { 
+          id: '1-6', 
+          name: 'Poder Judiciário', 
+          studyTime: 45, 
+          questionsTotal: 15, 
+          questionsCorrect: 12, 
+          difficulty: 'hard',
+          studyRecords: [
+            { id: '8', date: new Date('2024-01-21'), studyTime: 45, questionsTotal: 15, questionsCorrect: 12 },
+          ]
+        },
       ]
     },
     {
@@ -91,8 +124,8 @@ export default function MateriasScreen() {
           questionsCorrect: 30, 
           difficulty: 'medium',
           studyRecords: [
-            { id: '6', date: new Date('2024-01-12'), studyTime: 75, questionsTotal: 20, questionsCorrect: 15 },
-            { id: '7', date: new Date('2024-01-19'), studyTime: 75, questionsTotal: 20, questionsCorrect: 15 },
+            { id: '9', date: new Date('2024-01-12'), studyTime: 75, questionsTotal: 20, questionsCorrect: 15 },
+            { id: '10', date: new Date('2024-01-19'), studyTime: 75, questionsTotal: 20, questionsCorrect: 15 },
           ]
         },
         { 
@@ -103,7 +136,29 @@ export default function MateriasScreen() {
           questionsCorrect: 15, 
           difficulty: 'hard',
           studyRecords: [
-            { id: '8', date: new Date('2024-01-20'), studyTime: 60, questionsTotal: 20, questionsCorrect: 15 },
+            { id: '11', date: new Date('2024-01-20'), studyTime: 60, questionsTotal: 20, questionsCorrect: 15 },
+          ]
+        },
+        { 
+          id: '2-3', 
+          name: 'Estatística', 
+          studyTime: 90, 
+          questionsTotal: 30, 
+          questionsCorrect: 22, 
+          difficulty: 'medium',
+          studyRecords: [
+            { id: '12', date: new Date('2024-01-22'), studyTime: 90, questionsTotal: 30, questionsCorrect: 22 },
+          ]
+        },
+        { 
+          id: '2-4', 
+          name: 'Probabilidade', 
+          studyTime: 45, 
+          questionsTotal: 15, 
+          questionsCorrect: 10, 
+          difficulty: 'hard',
+          studyRecords: [
+            { id: '13', date: new Date('2024-01-23'), studyTime: 45, questionsTotal: 15, questionsCorrect: 10 },
           ]
         },
       ]
@@ -121,8 +176,8 @@ export default function MateriasScreen() {
           questionsCorrect: 28, 
           difficulty: 'medium',
           studyRecords: [
-            { id: '9', date: new Date('2024-01-13'), studyTime: 45, questionsTotal: 18, questionsCorrect: 14 },
-            { id: '10', date: new Date('2024-01-21'), studyTime: 45, questionsTotal: 17, questionsCorrect: 14 },
+            { id: '14', date: new Date('2024-01-13'), studyTime: 45, questionsTotal: 18, questionsCorrect: 14 },
+            { id: '15', date: new Date('2024-01-21'), studyTime: 45, questionsTotal: 17, questionsCorrect: 14 },
           ]
         },
         { 
@@ -133,7 +188,29 @@ export default function MateriasScreen() {
           questionsCorrect: 10, 
           difficulty: 'easy',
           studyRecords: [
-            { id: '11', date: new Date('2024-01-22'), studyTime: 45, questionsTotal: 15, questionsCorrect: 10 },
+            { id: '16', date: new Date('2024-01-22'), studyTime: 45, questionsTotal: 15, questionsCorrect: 10 },
+          ]
+        },
+        { 
+          id: '3-3', 
+          name: 'Morfologia', 
+          studyTime: 60, 
+          questionsTotal: 20, 
+          questionsCorrect: 16, 
+          difficulty: 'easy',
+          studyRecords: [
+            { id: '17', date: new Date('2024-01-24'), studyTime: 60, questionsTotal: 20, questionsCorrect: 16 },
+          ]
+        },
+        { 
+          id: '3-4', 
+          name: 'Interpretação de Texto', 
+          studyTime: 120, 
+          questionsTotal: 40, 
+          questionsCorrect: 35, 
+          difficulty: 'medium',
+          studyRecords: [
+            { id: '18', date: new Date('2024-01-25'), studyTime: 120, questionsTotal: 40, questionsCorrect: 35 },
           ]
         },
       ]
@@ -522,117 +599,127 @@ export default function MateriasScreen() {
 
             {expandedSubjects.includes(subject.id) && (
               <View style={styles.topicsContainer}>
-                {subject.topics
-                  .filter(topic => 
-                    searchTerm === '' || 
-                    topic.name.toLowerCase().includes(searchTerm.toLowerCase())
-                  )
-                  .map((topic) => {
-                    const color = getTopicColor(topic);
-                    const accuracy = topic.questionsTotal > 0 
-                      ? (topic.questionsCorrect / topic.questionsTotal) * 100 
-                      : 0;
-
-                    return (
-                      <View key={topic.id} style={styles.topicCard}>
-                        <View style={styles.topicHeader}>
-                          <View style={styles.topicInfo}>
-                            <View 
-                              style={[
-                                styles.colorIndicator,
-                                color === 'red' && styles.colorRed,
-                                color === 'yellow' && styles.colorYellow,
-                                color === 'green' && styles.colorGreen,
-                                color === 'gray' && styles.colorGray,
-                              ]}
-                            />
-                            <Text style={styles.topicName}>{topic.name}</Text>
-                          </View>
-                          <View style={styles.topicActions}>
-                            <TouchableOpacity
-                              style={styles.recordsToggleButton}
-                              onPress={() => toggleRecords(topic.id)}
-                            >
-                              {showRecords[topic.id] ? (
-                                <EyeOff size={16} color="#a0aec0" />
-                              ) : (
-                                <Eye size={16} color="#a0aec0" />
-                              )}
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                              style={styles.editTopicButton}
-                              onPress={() => {
-                                setEditingTopic({ subjectId: subject.id, topic });
-                                setShowEditTopicModal(true);
-                              }}
-                            >
-                              <Edit3 size={16} color="#a0aec0" />
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                              style={styles.deleteTopicButton}
-                              onPress={() => deleteTopic(subject.id, topic.id)}
-                            >
-                              <Trash2 size={16} color="#e53e3e" />
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                              style={styles.addStudyButton}
-                              onPress={() => openStudyModal(subject.id, topic.id)}
-                            >
-                              <Plus size={16} color="#48bb78" />
-                            </TouchableOpacity>
-                          </View>
-                        </View>
-                        
-                        <View style={styles.topicStats}>
-                          <View style={styles.statItem}>
-                            <Clock size={14} color="#a0aec0" />
-                            <Text style={styles.statText}>{formatTime(topic.studyTime)}</Text>
-                          </View>
-                          <View style={styles.statItem}>
-                            <CheckCircle size={14} color="#48bb78" />
-                            <Text style={styles.statText}>
-                              {topic.questionsCorrect}/{topic.questionsTotal}
-                            </Text>
-                          </View>
-                          <View style={styles.statItem}>
-                            <Text style={styles.accuracyText}>
-                              {accuracy.toFixed(0)}%
-                            </Text>
-                          </View>
-                        </View>
-
-                        {showRecords[topic.id] && topic.studyRecords.length > 0 && (
-                          <View style={styles.recordsSection}>
-                            <Text style={styles.recordsTitle}>Registros de estudo:</Text>
-                            {topic.studyRecords.slice(-5).map((record) => (
-                              <View key={record.id} style={styles.recordItem}>
-                                <Text style={styles.recordDate}>
-                                  {record.date.toLocaleDateString('pt-BR')}
-                                </Text>
-                                <Text style={styles.recordDetails}>
-                                  {formatTime(record.studyTime)} • {record.questionsCorrect}/{record.questionsTotal} • {((record.questionsCorrect / record.questionsTotal) * 100).toFixed(0)}%
-                                </Text>
-                              </View>
-                            ))}
-                          </View>
-                        )}
-                      </View>
-                    );
-                  })}
-                
-                {/* Add Topic Button */}
-                <TouchableOpacity
-                  style={styles.addTopicButton}
-                  onPress={() => {
-                    const topicName = prompt('Nome do novo tópico:');
-                    if (topicName) {
-                      addTopicToSubject(subject.id, topicName);
-                    }
-                  }}
+                {/* Horizontal Scrollable Topics */}
+                <ScrollView 
+                  horizontal 
+                  showsHorizontalScrollIndicator={false}
+                  style={styles.topicsScrollView}
+                  contentContainerStyle={styles.topicsScrollContent}
                 >
-                  <Plus size={16} color="#48bb78" />
-                  <Text style={styles.addTopicText}>Adicionar Tópico</Text>
-                </TouchableOpacity>
+                  {subject.topics
+                    .filter(topic => 
+                      searchTerm === '' || 
+                      topic.name.toLowerCase().includes(searchTerm.toLowerCase())
+                    )
+                    .map((topic) => {
+                      const color = getTopicColor(topic);
+                      const accuracy = topic.questionsTotal > 0 
+                        ? (topic.questionsCorrect / topic.questionsTotal) * 100 
+                        : 0;
+
+                      return (
+                        <View key={topic.id} style={styles.topicCard}>
+                          <View style={styles.topicHeader}>
+                            <View style={styles.topicInfo}>
+                              <View 
+                                style={[
+                                  styles.colorIndicator,
+                                  color === 'red' && styles.colorRed,
+                                  color === 'yellow' && styles.colorYellow,
+                                  color === 'green' && styles.colorGreen,
+                                  color === 'gray' && styles.colorGray,
+                                ]}
+                              />
+                              <Text style={styles.topicName} numberOfLines={2}>
+                                {topic.name}
+                              </Text>
+                            </View>
+                            <View style={styles.topicActions}>
+                              <TouchableOpacity
+                                style={styles.recordsToggleButton}
+                                onPress={() => toggleRecords(topic.id)}
+                              >
+                                {showRecords[topic.id] ? (
+                                  <EyeOff size={14} color="#a0aec0" />
+                                ) : (
+                                  <Eye size={14} color="#a0aec0" />
+                                )}
+                              </TouchableOpacity>
+                              <TouchableOpacity
+                                style={styles.editTopicButton}
+                                onPress={() => {
+                                  setEditingTopic({ subjectId: subject.id, topic });
+                                  setShowEditTopicModal(true);
+                                }}
+                              >
+                                <Edit3 size={14} color="#a0aec0" />
+                              </TouchableOpacity>
+                              <TouchableOpacity
+                                style={styles.deleteTopicButton}
+                                onPress={() => deleteTopic(subject.id, topic.id)}
+                              >
+                                <Trash2 size={14} color="#e53e3e" />
+                              </TouchableOpacity>
+                              <TouchableOpacity
+                                style={styles.addStudyButton}
+                                onPress={() => openStudyModal(subject.id, topic.id)}
+                              >
+                                <Plus size={14} color="#48bb78" />
+                              </TouchableOpacity>
+                            </View>
+                          </View>
+                          
+                          <View style={styles.topicStats}>
+                            <View style={styles.statItem}>
+                              <Clock size={12} color="#a0aec0" />
+                              <Text style={styles.statText}>{formatTime(topic.studyTime)}</Text>
+                            </View>
+                            <View style={styles.statItem}>
+                              <CheckCircle size={12} color="#48bb78" />
+                              <Text style={styles.statText}>
+                                {topic.questionsCorrect}/{topic.questionsTotal}
+                              </Text>
+                            </View>
+                            <View style={styles.statItem}>
+                              <Text style={styles.accuracyText}>
+                                {accuracy.toFixed(0)}%
+                              </Text>
+                            </View>
+                          </View>
+
+                          {showRecords[topic.id] && topic.studyRecords.length > 0 && (
+                            <View style={styles.recordsSection}>
+                              <Text style={styles.recordsTitle}>Registros:</Text>
+                              {topic.studyRecords.slice(-3).map((record) => (
+                                <View key={record.id} style={styles.recordItem}>
+                                  <Text style={styles.recordDate}>
+                                    {record.date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}
+                                  </Text>
+                                  <Text style={styles.recordDetails}>
+                                    {formatTime(record.studyTime)} • {record.questionsCorrect}/{record.questionsTotal}
+                                  </Text>
+                                </View>
+                              ))}
+                            </View>
+                          )}
+                        </View>
+                      );
+                    })}
+                  
+                  {/* Add Topic Button */}
+                  <TouchableOpacity
+                    style={styles.addTopicCard}
+                    onPress={() => {
+                      const topicName = prompt('Nome do novo tópico:');
+                      if (topicName) {
+                        addTopicToSubject(subject.id, topicName);
+                      }
+                    }}
+                  >
+                    <Plus size={20} color="#48bb78" />
+                    <Text style={styles.addTopicText}>Novo Tópico</Text>
+                  </TouchableOpacity>
+                </ScrollView>
               </View>
             )}
           </View>
@@ -1171,7 +1258,13 @@ const styles = StyleSheet.create({
   topicsContainer: {
     paddingHorizontal: 16,
     paddingBottom: 16,
-    gap: 8,
+  },
+  topicsScrollView: {
+    marginHorizontal: -8,
+  },
+  topicsScrollContent: {
+    paddingHorizontal: 8,
+    gap: 12,
   },
   topicCard: {
     backgroundColor: '#1a202c',
@@ -1179,22 +1272,23 @@ const styles = StyleSheet.create({
     padding: 12,
     borderWidth: 1,
     borderColor: '#4a5568',
+    width: 200,
+    minHeight: 140,
   },
   topicHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
     marginBottom: 8,
   },
   topicInfo: {
     flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
+    alignItems: 'flex-start',
+    marginBottom: 8,
   },
   colorIndicator: {
     width: 8,
     height: 8,
     borderRadius: 4,
     marginRight: 8,
+    marginTop: 4,
   },
   colorRed: {
     backgroundColor: '#e53e3e',
@@ -1210,29 +1304,30 @@ const styles = StyleSheet.create({
   },
   topicName: {
     color: '#ffffff',
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
+    flex: 1,
+    lineHeight: 18,
   },
   topicActions: {
     flexDirection: 'row',
-    gap: 8,
-  },
-  recordsToggleButton: {
-    padding: 4,
-  },
-  editTopicButton: {
-    padding: 4,
-  },
-  deleteTopicButton: {
-    padding: 4,
-  },
-  addStudyButton: {
-    padding: 4,
-  },
-  topicStats: {
-    flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+  },
+  recordsToggleButton: {
+    padding: 2,
+  },
+  editTopicButton: {
+    padding: 2,
+  },
+  deleteTopicButton: {
+    padding: 2,
+  },
+  addStudyButton: {
+    padding: 2,
+  },
+  topicStats: {
+    gap: 6,
     marginBottom: 8,
   },
   statItem: {
@@ -1242,11 +1337,11 @@ const styles = StyleSheet.create({
   },
   statText: {
     color: '#a0aec0',
-    fontSize: 12,
+    fontSize: 11,
   },
   accuracyText: {
     color: '#48bb78',
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: 'bold',
   },
   recordsSection: {
@@ -1257,45 +1352,44 @@ const styles = StyleSheet.create({
   },
   recordsTitle: {
     color: '#a0aec0',
-    fontSize: 12,
-    marginBottom: 8,
+    fontSize: 10,
+    marginBottom: 6,
     fontWeight: 'bold',
   },
   recordItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 4,
-    paddingHorizontal: 8,
+    paddingVertical: 2,
+    paddingHorizontal: 4,
     backgroundColor: '#2d3748',
-    borderRadius: 6,
-    marginBottom: 4,
+    borderRadius: 4,
+    marginBottom: 2,
   },
   recordDate: {
     color: '#a0aec0',
-    fontSize: 11,
+    fontSize: 9,
     fontWeight: '600',
   },
   recordDetails: {
     color: '#e2e8f0',
-    fontSize: 11,
+    fontSize: 9,
   },
-  addTopicButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+  addTopicCard: {
     backgroundColor: '#1a202c',
     borderRadius: 12,
     padding: 16,
     borderWidth: 2,
     borderColor: '#48bb78',
     borderStyle: 'dashed',
+    width: 120,
+    minHeight: 140,
+    justifyContent: 'center',
+    alignItems: 'center',
     gap: 8,
   },
   addTopicText: {
     color: '#48bb78',
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '600',
+    textAlign: 'center',
   },
   modalOverlay: {
     flex: 1,
