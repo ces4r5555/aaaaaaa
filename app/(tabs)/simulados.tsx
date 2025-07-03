@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Modal, TextInput, Alert, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Plus, Calendar, Trophy, Target, Clock, FileText, ChevronDown } from 'lucide-react-native';
+import { Plus, Search, ChevronRight, Clock, CircleCheck as CheckCircle, Circle, Filter, CreditCard as Edit3, Calendar, Eye, EyeOff, Trash2, Settings } from 'lucide-react-native';
 
 interface SimuladoResult {
   subject: string;
@@ -71,7 +71,9 @@ export default function SimuladosScreen() {
   ]);
 
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [showSubjectModal, setShowSubjectModal] = useState(false);
+  const [editingSimulado, setEditingSimulado] = useState<Simulado | null>(null);
   const [newSimulado, setNewSimulado] = useState({
     name: '',
     date: new Date(),
@@ -136,9 +138,82 @@ export default function SimuladosScreen() {
     };
 
     setSimulados(prev => [simulado, ...prev]);
-    setNewSimulado({ name: '', date: new Date(), results: [] });
+    resetForm();
     setShowAddModal(false);
     Alert.alert('Sucesso', 'Simulado registrado com sucesso!');
+  };
+
+  const editSimulado = (simulado: Simulado) => {
+    setEditingSimulado(simulado);
+    setNewSimulado({
+      name: simulado.name,
+      date: simulado.date,
+      results: [...simulado.results],
+    });
+    setShowEditModal(true);
+  };
+
+  const updateSimulado = () => {
+    if (!editingSimulado || !newSimulado.name || newSimulado.results.length === 0) {
+      Alert.alert('Erro', 'Digite o nome do simulado e adicione pelo menos um resultado');
+      return;
+    }
+
+    const totalQuestions = newSimulado.results.reduce((sum, r) => sum + r.questionsTotal, 0);
+    const totalCorrect = newSimulado.results.reduce((sum, r) => sum + r.questionsCorrect, 0);
+    const totalTime = newSimulado.results.reduce((sum, r) => sum + r.timeSpent, 0);
+    const accuracy = totalQuestions > 0 ? (totalCorrect / totalQuestions) * 100 : 0;
+
+    setSimulados(prev => prev.map(s => 
+      s.id === editingSimulado.id 
+        ? {
+            ...s,
+            name: newSimulado.name,
+            date: newSimulado.date,
+            results: newSimulado.results,
+            totalQuestions,
+            totalCorrect,
+            totalTime,
+            accuracy,
+          }
+        : s
+    ));
+
+    resetForm();
+    setEditingSimulado(null);
+    setShowEditModal(false);
+    Alert.alert('Sucesso', 'Simulado atualizado com sucesso!');
+  };
+
+  const deleteSimulado = (simuladoId: string) => {
+    Alert.alert(
+      'Confirmar Exclusão',
+      'Tem certeza que deseja excluir este simulado?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Excluir',
+          style: 'destructive',
+          onPress: () => {
+            setSimulados(prev => prev.filter(s => s.id !== simuladoId));
+            Alert.alert('Sucesso', 'Simulado excluído!');
+          },
+        },
+      ]
+    );
+  };
+
+  const removeResult = (index: number) => {
+    setNewSimulado(prev => ({
+      ...prev,
+      results: prev.results.filter((_, i) => i !== index)
+    }));
+  };
+
+  const resetForm = () => {
+    setNewSimulado({ name: '', date: new Date(), results: [] });
+    setCurrentResult({});
+    setSelectedSubject('');
   };
 
   const formatTime = (minutes: number) => {
@@ -178,25 +253,21 @@ export default function SimuladosScreen() {
           <Text style={styles.sectionTitle}>Estatísticas Gerais</Text>
           <View style={styles.statsGrid}>
             <View style={[styles.statCard, styles.blueCard]}>
-              <FileText size={24} color="#ffffff" />
               <Text style={styles.statValue}>{totalSimulados}</Text>
               <Text style={styles.statLabel}>Simulados</Text>
             </View>
             
             <View style={[styles.statCard, styles.greenCard]}>
-              <Trophy size={24} color="#ffffff" />
               <Text style={styles.statValue}>{averageAccuracy.toFixed(1)}%</Text>
               <Text style={styles.statLabel}>Média Geral</Text>
             </View>
             
             <View style={[styles.statCard, styles.orangeCard]}>
-              <Target size={24} color="#ffffff" />
               <Text style={styles.statValue}>{bestAccuracy.toFixed(1)}%</Text>
               <Text style={styles.statLabel}>Melhor Resultado</Text>
             </View>
             
             <View style={[styles.statCard, styles.yellowCard]}>
-              <Clock size={24} color="#ffffff" />
               <Text style={styles.statValue}>{formatTime(totalTimeSpent)}</Text>
               <Text style={styles.statLabel}>Tempo Total</Text>
             </View>
@@ -209,7 +280,6 @@ export default function SimuladosScreen() {
           
           {simulados.length === 0 ? (
             <View style={styles.emptyState}>
-              <FileText size={48} color="#4a5568" />
               <Text style={styles.emptyText}>Nenhum simulado registrado</Text>
               <Text style={styles.emptySubtext}>Adicione seu primeiro simulado para começar o acompanhamento</Text>
             </View>
@@ -226,18 +296,32 @@ export default function SimuladosScreen() {
                       </Text>
                     </View>
                   </View>
-                  <View style={styles.simuladoScore}>
-                    <Text 
-                      style={[
-                        styles.accuracyText, 
-                        { color: getAccuracyColor(simulado.accuracy) }
-                      ]}
+                  <View style={styles.simuladoActions}>
+                    <TouchableOpacity
+                      style={styles.actionButton}
+                      onPress={() => editSimulado(simulado)}
                     >
-                      {simulado.accuracy.toFixed(1)}%
-                    </Text>
-                    <Text style={styles.questionsText}>
-                      {simulado.totalCorrect}/{simulado.totalQuestions}
-                    </Text>
+                      <Edit3 size={16} color="#a0aec0" />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.actionButton}
+                      onPress={() => deleteSimulado(simulado.id)}
+                    >
+                      <Trash2 size={16} color="#e53e3e" />
+                    </TouchableOpacity>
+                    <View style={styles.simuladoScore}>
+                      <Text 
+                        style={[
+                          styles.accuracyText, 
+                          { color: getAccuracyColor(simulado.accuracy) }
+                        ]}
+                      >
+                        {simulado.accuracy.toFixed(1)}%
+                      </Text>
+                      <Text style={styles.questionsText}>
+                        {simulado.totalCorrect}/{simulado.totalQuestions}
+                      </Text>
+                    </View>
                   </View>
                 </View>
 
@@ -247,7 +331,6 @@ export default function SimuladosScreen() {
                     <Text style={styles.statText}>{formatTime(simulado.totalTime)}</Text>
                   </View>
                   <View style={styles.statItem}>
-                    <FileText size={16} color="#a0aec0" />
                     <Text style={styles.statText}>{simulado.results.length} matérias</Text>
                   </View>
                 </View>
@@ -282,130 +365,151 @@ export default function SimuladosScreen() {
         </View>
       </ScrollView>
 
-      {/* Add Simulado Modal */}
+      {/* Add/Edit Simulado Modal */}
       <Modal
-        visible={showAddModal}
+        visible={showAddModal || showEditModal}
         animationType="slide"
         transparent={true}
-        onRequestClose={() => setShowAddModal(false)}
+        onRequestClose={() => {
+          setShowAddModal(false);
+          setShowEditModal(false);
+          resetForm();
+          setEditingSimulado(null);
+        }}
       >
         <View style={styles.modalOverlay}>
-          <ScrollView contentContainerStyle={styles.modalScrollContent}>
-            <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>Registrar Simulado</Text>
-              
-              <TextInput
-                style={styles.modalInput}
-                placeholder="Nome do simulado"
-                placeholderTextColor="#a0aec0"
-                value={newSimulado.name}
-                onChangeText={(text) => setNewSimulado(prev => ({ ...prev, name: text }))}
-              />
+          <View style={styles.modalContainer}>
+            <ScrollView 
+              style={styles.modalScrollView}
+              contentContainerStyle={styles.modalScrollContent}
+              showsVerticalScrollIndicator={false}
+            >
+              <View style={styles.modalContent}>
+                <Text style={styles.modalTitle}>
+                  {showEditModal ? 'Editar Simulado' : 'Registrar Simulado'}
+                </Text>
+                
+                <TextInput
+                  style={styles.modalInput}
+                  placeholder="Nome do simulado"
+                  placeholderTextColor="#a0aec0"
+                  value={newSimulado.name}
+                  onChangeText={(text) => setNewSimulado(prev => ({ ...prev, name: text }))}
+                />
 
-              <View style={styles.resultSection}>
-                <Text style={styles.resultTitle}>Adicionar Resultado por Matéria</Text>
-                
-                <TouchableOpacity
-                  style={styles.subjectSelector}
-                  onPress={() => setShowSubjectModal(true)}
-                >
-                  <Text style={[styles.subjectSelectorText, !selectedSubject && styles.placeholder]}>
-                    {selectedSubject || 'Selecionar matéria'}
-                  </Text>
-                  <ChevronDown size={20} color="#a0aec0" />
-                </TouchableOpacity>
-                
-                <View style={styles.inputGrid}>
-                  <View style={styles.inputRow}>
-                    <View style={styles.inputContainer}>
-                      <Text style={styles.inputLabel}>Total de questões</Text>
-                      <TextInput
-                        style={styles.gridInput}
-                        placeholder="0"
-                        placeholderTextColor="#a0aec0"
-                        keyboardType="numeric"
-                        value={currentResult.questionsTotal?.toString() || ''}
-                        onChangeText={(text) => setCurrentResult(prev => ({ 
-                          ...prev, 
-                          questionsTotal: parseInt(text) || 0 
-                        }))}
-                      />
+                <View style={styles.resultSection}>
+                  <Text style={styles.resultTitle}>Adicionar Resultado por Matéria</Text>
+                  
+                  <TouchableOpacity
+                    style={styles.subjectSelector}
+                    onPress={() => setShowSubjectModal(true)}
+                  >
+                    <Text style={[styles.subjectSelectorText, !selectedSubject && styles.placeholder]}>
+                      {selectedSubject || 'Selecionar matéria'}
+                    </Text>
+                  </TouchableOpacity>
+                  
+                  <View style={styles.inputGrid}>
+                    <View style={styles.inputRow}>
+                      <View style={styles.inputContainer}>
+                        <Text style={styles.inputLabel}>Total de questões</Text>
+                        <TextInput
+                          style={styles.gridInput}
+                          placeholder="0"
+                          placeholderTextColor="#a0aec0"
+                          keyboardType="numeric"
+                          value={currentResult.questionsTotal?.toString() || ''}
+                          onChangeText={(text) => setCurrentResult(prev => ({ 
+                            ...prev, 
+                            questionsTotal: parseInt(text) || 0 
+                          }))}
+                        />
+                      </View>
+                      <View style={styles.inputContainer}>
+                        <Text style={styles.inputLabel}>Questões certas</Text>
+                        <TextInput
+                          style={styles.gridInput}
+                          placeholder="0"
+                          placeholderTextColor="#a0aec0"
+                          keyboardType="numeric"
+                          value={currentResult.questionsCorrect?.toString() || ''}
+                          onChangeText={(text) => setCurrentResult(prev => ({ 
+                            ...prev, 
+                            questionsCorrect: parseInt(text) || 0 
+                          }))}
+                        />
+                      </View>
                     </View>
+                    
                     <View style={styles.inputContainer}>
-                      <Text style={styles.inputLabel}>Questões certas</Text>
+                      <Text style={styles.inputLabel}>Tempo gasto (minutos)</Text>
                       <TextInput
                         style={styles.gridInput}
                         placeholder="0"
                         placeholderTextColor="#a0aec0"
                         keyboardType="numeric"
-                        value={currentResult.questionsCorrect?.toString() || ''}
+                        value={currentResult.timeSpent?.toString() || ''}
                         onChangeText={(text) => setCurrentResult(prev => ({ 
                           ...prev, 
-                          questionsCorrect: parseInt(text) || 0 
+                          timeSpent: parseInt(text) || 0 
                         }))}
                       />
                     </View>
                   </View>
                   
-                  <View style={styles.inputContainer}>
-                    <Text style={styles.inputLabel}>Tempo gasto (minutos)</Text>
-                    <TextInput
-                      style={styles.gridInput}
-                      placeholder="0"
-                      placeholderTextColor="#a0aec0"
-                      keyboardType="numeric"
-                      value={currentResult.timeSpent?.toString() || ''}
-                      onChangeText={(text) => setCurrentResult(prev => ({ 
-                        ...prev, 
-                        timeSpent: parseInt(text) || 0 
-                      }))}
-                    />
-                  </View>
+                  <TouchableOpacity
+                    style={styles.addResultButton}
+                    onPress={addSimuladoResult}
+                  >
+                    <Text style={styles.addResultText}>Adicionar Resultado</Text>
+                  </TouchableOpacity>
                 </View>
-                
-                <TouchableOpacity
-                  style={styles.addResultButton}
-                  onPress={addSimuladoResult}
-                >
-                  <Text style={styles.addResultText}>Adicionar Resultado</Text>
-                </TouchableOpacity>
-              </View>
 
-              {/* Added Results */}
-              {newSimulado.results.length > 0 && (
-                <View style={styles.addedResults}>
-                  <Text style={styles.addedResultsTitle}>Resultados Adicionados:</Text>
-                  {newSimulado.results.map((result, index) => (
-                    <View key={index} style={styles.addedResultItem}>
-                      <Text style={styles.addedResultText}>
-                        {result.subject}: {result.questionsCorrect}/{result.questionsTotal} 
-                        ({((result.questionsCorrect / result.questionsTotal) * 100).toFixed(1)}%)
-                      </Text>
-                    </View>
-                  ))}
+                {/* Added Results */}
+                {newSimulado.results.length > 0 && (
+                  <View style={styles.addedResults}>
+                    <Text style={styles.addedResultsTitle}>Resultados Adicionados:</Text>
+                    {newSimulado.results.map((result, index) => (
+                      <View key={index} style={styles.addedResultItem}>
+                        <Text style={styles.addedResultText}>
+                          {result.subject}: {result.questionsCorrect}/{result.questionsTotal} 
+                          ({((result.questionsCorrect / result.questionsTotal) * 100).toFixed(1)}%)
+                        </Text>
+                        <TouchableOpacity
+                          style={styles.removeResultButton}
+                          onPress={() => removeResult(index)}
+                        >
+                          <Trash2 size={14} color="#e53e3e" />
+                        </TouchableOpacity>
+                      </View>
+                    ))}
+                  </View>
+                )}
+                
+                <View style={styles.modalButtons}>
+                  <TouchableOpacity
+                    style={[styles.modalButton, styles.cancelButton]}
+                    onPress={() => {
+                      setShowAddModal(false);
+                      setShowEditModal(false);
+                      resetForm();
+                      setEditingSimulado(null);
+                    }}
+                  >
+                    <Text style={styles.cancelButtonText}>Cancelar</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.modalButton, styles.saveButton]}
+                    onPress={showEditModal ? updateSimulado : saveSimulado}
+                  >
+                    <Text style={styles.saveButtonText}>
+                      {showEditModal ? 'Atualizar' : 'Salvar'}
+                    </Text>
+                  </TouchableOpacity>
                 </View>
-              )}
-              
-              <View style={styles.modalButtons}>
-                <TouchableOpacity
-                  style={[styles.modalButton, styles.cancelButton]}
-                  onPress={() => {
-                    setShowAddModal(false);
-                    setNewSimulado({ name: '', date: new Date(), results: [] });
-                    setCurrentResult({});
-                  }}
-                >
-                  <Text style={styles.cancelButtonText}>Cancelar</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.modalButton, styles.saveButton]}
-                  onPress={saveSimulado}
-                >
-                  <Text style={styles.saveButtonText}>Salvar Simulado</Text>
-                </TouchableOpacity>
               </View>
-            </View>
-          </ScrollView>
+            </ScrollView>
+          </View>
         </View>
       </Modal>
 
@@ -527,7 +631,6 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     color: '#ffffff',
-    marginTop: 8,
     marginBottom: 4,
   },
   statLabel: {
@@ -548,7 +651,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: '#4a5568',
-    marginTop: 16,
     marginBottom: 8,
   },
   emptySubtext: {
@@ -588,6 +690,16 @@ const styles = StyleSheet.create({
   simuladoDate: {
     fontSize: 12,
     color: '#a0aec0',
+  },
+  simuladoActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  actionButton: {
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: '#1a202c',
   },
   simuladoScore: {
     alignItems: 'flex-end',
@@ -647,19 +759,25 @@ const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.8)',
-  },
-  modalScrollContent: {
-    flexGrow: 1,
     justifyContent: 'center',
+    alignItems: 'center',
     padding: 20,
   },
-  modalContent: {
+  modalContainer: {
     backgroundColor: '#2d3748',
     borderRadius: 16,
-    padding: 24,
     width: '100%',
     maxWidth: 400,
-    alignSelf: 'center',
+    maxHeight: '85%',
+  },
+  modalScrollView: {
+    flex: 1,
+  },
+  modalScrollContent: {
+    padding: 24,
+  },
+  modalContent: {
+    width: '100%',
   },
   subjectModalContent: {
     backgroundColor: '#2d3748',
@@ -668,9 +786,6 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 400,
     maxHeight: '80%',
-    alignSelf: 'center',
-    marginTop: 'auto',
-    marginBottom: 'auto',
   },
   modalTitle: {
     fontSize: 20,
@@ -691,9 +806,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#1a202c',
     borderRadius: 12,
     padding: 16,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
     marginBottom: 16,
   },
   subjectSelectorText: {
@@ -804,10 +916,17 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 8,
     marginBottom: 4,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   addedResultText: {
     fontSize: 12,
     color: '#a0aec0',
+    flex: 1,
+  },
+  removeResultButton: {
+    padding: 4,
   },
   modalButtons: {
     flexDirection: 'row',

@@ -30,63 +30,26 @@ interface FreeStudyTimer {
   isRunning: boolean;
 }
 
+interface WeeklyGoal {
+  id: string;
+  subjects: string[];
+  weeklyHours: number;
+  dailyDistribution: {
+    monday: number;
+    tuesday: number;
+    wednesday: number;
+    thursday: number;
+    friday: number;
+    saturday: number;
+    sunday: number;
+  };
+  completedHours: number;
+  isActive: boolean;
+}
+
 export default function TodayScreen() {
-  const [dailyGoals, setDailyGoals] = useState<DailyGoal[]>([
-    { 
-      id: '1', 
-      subject: 'Direito Constitucional', 
-      targetMinutes: 60, 
-      currentMinutes: 45, 
-      status: 'paused', 
-      isRunning: false,
-      pomodoroSettings: { workMinutes: 25, breakMinutes: 5, longBreakMinutes: 15, cyclesBeforeLongBreak: 4 }
-    },
-    { 
-      id: '2', 
-      subject: 'Matemática', 
-      targetMinutes: 45, 
-      currentMinutes: 45, 
-      status: 'completed', 
-      isRunning: false,
-      pomodoroSettings: { workMinutes: 30, breakMinutes: 10, longBreakMinutes: 20, cyclesBeforeLongBreak: 3 }
-    },
-    { 
-      id: '3', 
-      subject: 'Português', 
-      targetMinutes: 30, 
-      currentMinutes: 15, 
-      status: 'paused', 
-      isRunning: false,
-      pomodoroSettings: { workMinutes: 25, breakMinutes: 5, longBreakMinutes: 15, cyclesBeforeLongBreak: 4 }
-    },
-    { 
-      id: '4', 
-      subject: 'Direito Administrativo', 
-      targetMinutes: 40, 
-      currentMinutes: 0, 
-      status: 'not-started', 
-      isRunning: false,
-      pomodoroSettings: { workMinutes: 25, breakMinutes: 5, longBreakMinutes: 15, cyclesBeforeLongBreak: 4 }
-    },
-    { 
-      id: '5', 
-      subject: 'Informática', 
-      targetMinutes: 25, 
-      currentMinutes: 0, 
-      status: 'not-started', 
-      isRunning: false,
-      pomodoroSettings: { workMinutes: 20, breakMinutes: 5, longBreakMinutes: 15, cyclesBeforeLongBreak: 4 }
-    },
-    { 
-      id: '6', 
-      subject: 'Raciocínio Lógico', 
-      targetMinutes: 35, 
-      currentMinutes: 20, 
-      status: 'paused', 
-      isRunning: false,
-      pomodoroSettings: { workMinutes: 25, breakMinutes: 5, longBreakMinutes: 15, cyclesBeforeLongBreak: 4 }
-    },
-  ]);
+  const [dailyGoals, setDailyGoals] = useState<DailyGoal[]>([]);
+  const [weeklyGoals, setWeeklyGoals] = useState<WeeklyGoal[]>([]);
 
   const [freeTimers, setFreeTimers] = useState<FreeStudyTimer[]>([]);
   const [activeTimer, setActiveTimer] = useState<string | null>(null);
@@ -111,6 +74,78 @@ export default function TodayScreen() {
     { name: 'Leve', workMinutes: 15, breakMinutes: 5, longBreakMinutes: 15, cyclesBeforeLongBreak: 4 },
     { name: 'Estudo Longo', workMinutes: 50, breakMinutes: 10, longBreakMinutes: 30, cyclesBeforeLongBreak: 2 },
   ];
+
+  // Carregar metas semanais e converter para metas diárias
+  useEffect(() => {
+    // Simular carregamento de metas semanais do AsyncStorage ou contexto
+    const mockWeeklyGoals: WeeklyGoal[] = [
+      {
+        id: '1',
+        subjects: ['Direito Constitucional'],
+        weeklyHours: 8,
+        dailyDistribution: {
+          monday: 1.5,
+          tuesday: 1.5,
+          wednesday: 1,
+          thursday: 1,
+          friday: 1.5,
+          saturday: 1,
+          sunday: 0.5,
+        },
+        completedHours: 6.5,
+        isActive: true,
+      },
+      {
+        id: '2',
+        subjects: ['Matemática', 'Português'],
+        weeklyHours: 10,
+        dailyDistribution: {
+          monday: 1.5,
+          tuesday: 1.5,
+          wednesday: 1.5,
+          thursday: 1.5,
+          friday: 1.5,
+          saturday: 1.5,
+          sunday: 1,
+        },
+        completedHours: 7,
+        isActive: true,
+      },
+    ];
+
+    setWeeklyGoals(mockWeeklyGoals);
+
+    // Converter metas semanais para metas diárias baseadas no dia atual
+    const today = new Date();
+    const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    const currentDay = dayNames[today.getDay()] as keyof WeeklyGoal['dailyDistribution'];
+
+    const todayGoals: DailyGoal[] = [];
+    
+    mockWeeklyGoals.forEach((weeklyGoal) => {
+      if (!weeklyGoal.isActive) return;
+
+      const todayHours = weeklyGoal.dailyDistribution[currentDay];
+      if (todayHours > 0) {
+        weeklyGoal.subjects.forEach((subject, index) => {
+          // Dividir as horas entre as matérias se houver múltiplas
+          const subjectHours = todayHours / weeklyGoal.subjects.length;
+          
+          todayGoals.push({
+            id: `${weeklyGoal.id}-${subject}-${index}`,
+            subject: subject,
+            targetMinutes: subjectHours * 60,
+            currentMinutes: Math.random() * subjectHours * 60, // Simular progresso
+            status: Math.random() > 0.7 ? 'completed' : Math.random() > 0.5 ? 'paused' : 'not-started',
+            isRunning: false,
+            pomodoroSettings: { ...globalPomodoroSettings }
+          });
+        });
+      }
+    });
+
+    setDailyGoals(todayGoals);
+  }, [globalPomodoroSettings]);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -254,7 +289,7 @@ export default function TodayScreen() {
 
   const totalGoals = dailyGoals.length;
   const completedGoals = dailyGoals.filter(g => g.status === 'completed').length;
-  const progressPercentage = (completedGoals / totalGoals) * 100;
+  const progressPercentage = totalGoals > 0 ? (completedGoals / totalGoals) * 100 : 0;
 
   const formatTime = (minutes: number) => {
     const hours = Math.floor(minutes / 60);
@@ -309,20 +344,27 @@ export default function TodayScreen() {
         {/* Daily Goals */}
         <View style={styles.goalsSection}>
           <Text style={styles.sectionTitle}>Metas de Hoje</Text>
-          <View style={styles.goalsGrid}>
-            {dailyGoals.map((goal) => (
-              <DailyGoalCard
-                key={goal.id}
-                goal={goal}
-                onControl={handleGoalControl}
-                onPomodoroSettings={(goalId) => {
-                  setEditingGoalId(goalId);
-                  setShowPomodoroModal(true);
-                }}
-                formatTime={formatTime}
-              />
-            ))}
-          </View>
+          {dailyGoals.length === 0 ? (
+            <View style={styles.emptyGoals}>
+              <Text style={styles.emptyGoalsText}>Nenhuma meta para hoje</Text>
+              <Text style={styles.emptyGoalsSubtext}>Configure suas metas semanais na aba "Metas"</Text>
+            </View>
+          ) : (
+            <View style={styles.goalsGrid}>
+              {dailyGoals.map((goal) => (
+                <DailyGoalCard
+                  key={goal.id}
+                  goal={goal}
+                  onControl={handleGoalControl}
+                  onPomodoroSettings={(goalId) => {
+                    setEditingGoalId(goalId);
+                    setShowPomodoroModal(true);
+                  }}
+                  formatTime={formatTime}
+                />
+              ))}
+            </View>
+          )}
         </View>
 
         {/* Free Study Timers */}
@@ -382,41 +424,49 @@ export default function TodayScreen() {
         onRequestClose={() => setShowGlobalSettingsModal(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Configurações Globais Pomodoro</Text>
-            <Text style={styles.modalSubtitle}>
-              Estas configurações serão aplicadas a todas as metas
-            </Text>
-            
-            {/* Quick Settings */}
-            <View style={styles.quickSettingsSection}>
-              <Text style={styles.quickSettingsTitle}>Configurações Rápidas</Text>
-              <View style={styles.quickSettingsGrid}>
-                {quickSettings.map((setting, index) => (
-                  <TouchableOpacity
-                    key={index}
-                    style={styles.quickSettingButton}
-                    onPress={() => applyQuickSetting(setting)}
-                  >
-                    <Text style={styles.quickSettingName}>{setting.name}</Text>
-                    <Text style={styles.quickSettingDetails}>
-                      {setting.workMinutes}min / {setting.breakMinutes}min
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
+          <View style={styles.modalContainer}>
+            <ScrollView 
+              style={styles.modalScrollView}
+              contentContainerStyle={styles.modalScrollContent}
+              showsVerticalScrollIndicator={false}
+            >
+              <View style={styles.modalContent}>
+                <Text style={styles.modalTitle}>Configurações Globais Pomodoro</Text>
+                <Text style={styles.modalSubtitle}>
+                  Estas configurações serão aplicadas a todas as metas
+                </Text>
+                
+                {/* Quick Settings */}
+                <View style={styles.quickSettingsSection}>
+                  <Text style={styles.quickSettingsTitle}>Configurações Rápidas</Text>
+                  <View style={styles.quickSettingsGrid}>
+                    {quickSettings.map((setting, index) => (
+                      <TouchableOpacity
+                        key={index}
+                        style={styles.quickSettingButton}
+                        onPress={() => applyQuickSetting(setting)}
+                      >
+                        <Text style={styles.quickSettingName}>{setting.name}</Text>
+                        <Text style={styles.quickSettingDetails}>
+                          {setting.workMinutes}min / {setting.breakMinutes}min
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
 
-            <PomodoroSettingsForm
-              settings={globalPomodoroSettings}
-              onSave={(settings) => {
-                setGlobalPomodoroSettings(settings);
-                setShowGlobalSettingsModal(false);
-              }}
-              onCancel={() => setShowGlobalSettingsModal(false)}
-              showApplyToAll={true}
-              onApplyToAll={applyGlobalSettings}
-            />
+                <PomodoroSettingsForm
+                  settings={globalPomodoroSettings}
+                  onSave={(settings) => {
+                    setGlobalPomodoroSettings(settings);
+                    setShowGlobalSettingsModal(false);
+                  }}
+                  onCancel={() => setShowGlobalSettingsModal(false)}
+                  showApplyToAll={true}
+                  onApplyToAll={applyGlobalSettings}
+                />
+              </View>
+            </ScrollView>
           </View>
         </View>
       </Modal>
@@ -429,42 +479,50 @@ export default function TodayScreen() {
         onRequestClose={() => setShowPomodoroModal(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Configurações Pomodoro</Text>
-            
-            {/* Quick Settings */}
-            <View style={styles.quickSettingsSection}>
-              <Text style={styles.quickSettingsTitle}>Configurações Rápidas</Text>
-              <View style={styles.quickSettingsGrid}>
-                {quickSettings.map((setting, index) => (
-                  <TouchableOpacity
-                    key={index}
-                    style={styles.quickSettingButton}
-                    onPress={() => applyQuickSetting(setting)}
-                  >
-                    <Text style={styles.quickSettingName}>{setting.name}</Text>
-                    <Text style={styles.quickSettingDetails}>
-                      {setting.workMinutes}min / {setting.breakMinutes}min
-                    </Text>
-                  </TouchableOpacity>
-                ))}
+          <View style={styles.modalContainer}>
+            <ScrollView 
+              style={styles.modalScrollView}
+              contentContainerStyle={styles.modalScrollContent}
+              showsVerticalScrollIndicator={false}
+            >
+              <View style={styles.modalContent}>
+                <Text style={styles.modalTitle}>Configurações Pomodoro</Text>
+                
+                {/* Quick Settings */}
+                <View style={styles.quickSettingsSection}>
+                  <Text style={styles.quickSettingsTitle}>Configurações Rápidas</Text>
+                  <View style={styles.quickSettingsGrid}>
+                    {quickSettings.map((setting, index) => (
+                      <TouchableOpacity
+                        key={index}
+                        style={styles.quickSettingButton}
+                        onPress={() => applyQuickSetting(setting)}
+                      >
+                        <Text style={styles.quickSettingName}>{setting.name}</Text>
+                        <Text style={styles.quickSettingDetails}>
+                          {setting.workMinutes}min / {setting.breakMinutes}min
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+                
+                {editingGoalId && (
+                  <PomodoroSettingsForm
+                    settings={dailyGoals.find(g => g.id === editingGoalId)?.pomodoroSettings}
+                    onSave={(settings) => {
+                      updatePomodoroSettings(editingGoalId, settings);
+                      setShowPomodoroModal(false);
+                      setEditingGoalId(null);
+                    }}
+                    onCancel={() => {
+                      setShowPomodoroModal(false);
+                      setEditingGoalId(null);
+                    }}
+                  />
+                )}
               </View>
-            </View>
-            
-            {editingGoalId && (
-              <PomodoroSettingsForm
-                settings={dailyGoals.find(g => g.id === editingGoalId)?.pomodoroSettings}
-                onSave={(settings) => {
-                  updatePomodoroSettings(editingGoalId, settings);
-                  setShowPomodoroModal(false);
-                  setEditingGoalId(null);
-                }}
-                onCancel={() => {
-                  setShowPomodoroModal(false);
-                  setEditingGoalId(null);
-                }}
-              />
-            )}
+            </ScrollView>
           </View>
         </View>
       </Modal>
@@ -667,6 +725,25 @@ const styles = StyleSheet.create({
   goalsGrid: {
     gap: 12,
   },
+  emptyGoals: {
+    backgroundColor: '#2d3748',
+    borderRadius: 16,
+    padding: 32,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#4a5568',
+  },
+  emptyGoalsText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#4a5568',
+    marginBottom: 8,
+  },
+  emptyGoalsSubtext: {
+    fontSize: 14,
+    color: '#4a5568',
+    textAlign: 'center',
+  },
   freeTimersSection: {
     padding: 20,
     paddingTop: 10,
@@ -738,13 +815,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
   },
+  modalContainer: {
+    backgroundColor: '#2d3748',
+    borderRadius: 16,
+    width: '100%',
+    maxWidth: 400,
+    maxHeight: '85%',
+  },
+  modalScrollView: {
+    flex: 1,
+  },
+  modalScrollContent: {
+    padding: 24,
+  },
   modalContent: {
     backgroundColor: '#2d3748',
     borderRadius: 16,
     padding: 24,
     width: '100%',
     maxWidth: 400,
-    maxHeight: '90%',
   },
   modalTitle: {
     fontSize: 20,
