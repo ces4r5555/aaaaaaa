@@ -6,7 +6,7 @@ import { DailyGoalCard } from '@/components/DailyGoalCard';
 import { ProgressBar } from '@/components/ProgressBar';
 import { CalendarGrid } from '@/components/CalendarGrid';
 
-const { height: screenHeight } = Dimensions.get('window');
+const { height: screenHeight, width: screenWidth } = Dimensions.get('window');
 
 interface PomodoroSettings {
   workMinutes: number;
@@ -426,48 +426,47 @@ export default function TodayScreen() {
         onRequestClose={() => setShowGlobalSettingsModal(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContainer, { maxHeight: screenHeight * 0.9 }]}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Configurações Globais Pomodoro</Text>
+              <Text style={styles.modalSubtitle}>
+                Estas configurações serão aplicadas a todas as metas
+              </Text>
+            </View>
+            
             <ScrollView 
               style={styles.modalScrollView}
-              contentContainerStyle={styles.modalScrollContent}
               showsVerticalScrollIndicator={false}
             >
-              <View style={styles.modalContent}>
-                <Text style={styles.modalTitle}>Configurações Globais Pomodoro</Text>
-                <Text style={styles.modalSubtitle}>
-                  Estas configurações serão aplicadas a todas as metas
-                </Text>
-                
-                {/* Quick Settings */}
-                <View style={styles.quickSettingsSection}>
-                  <Text style={styles.quickSettingsTitle}>Configurações Rápidas</Text>
-                  <View style={styles.quickSettingsGrid}>
-                    {quickSettings.map((setting, index) => (
-                      <TouchableOpacity
-                        key={index}
-                        style={styles.quickSettingButton}
-                        onPress={() => applyQuickSetting(setting)}
-                      >
-                        <Text style={styles.quickSettingName}>{setting.name}</Text>
-                        <Text style={styles.quickSettingDetails}>
-                          {setting.workMinutes}min / {setting.breakMinutes}min
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
+              {/* Quick Settings */}
+              <View style={styles.quickSettingsSection}>
+                <Text style={styles.quickSettingsTitle}>Configurações Rápidas</Text>
+                <View style={styles.quickSettingsGrid}>
+                  {quickSettings.map((setting, index) => (
+                    <TouchableOpacity
+                      key={index}
+                      style={styles.quickSettingButton}
+                      onPress={() => applyQuickSetting(setting)}
+                    >
+                      <Text style={styles.quickSettingName}>{setting.name}</Text>
+                      <Text style={styles.quickSettingDetails}>
+                        {setting.workMinutes}min / {setting.breakMinutes}min
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
                 </View>
-
-                <PomodoroSettingsForm
-                  settings={globalPomodoroSettings}
-                  onSave={(settings) => {
-                    setGlobalPomodoroSettings(settings);
-                    setShowGlobalSettingsModal(false);
-                  }}
-                  onCancel={() => setShowGlobalSettingsModal(false)}
-                  showApplyToAll={true}
-                  onApplyToAll={applyGlobalSettings}
-                />
               </View>
+
+              <PomodoroSettingsForm
+                settings={globalPomodoroSettings}
+                onSave={(settings) => {
+                  setGlobalPomodoroSettings(settings);
+                  setShowGlobalSettingsModal(false);
+                }}
+                onCancel={() => setShowGlobalSettingsModal(false)}
+                showApplyToAll={true}
+                onApplyToAll={applyGlobalSettings}
+              />
             </ScrollView>
           </View>
         </View>
@@ -481,49 +480,48 @@ export default function TodayScreen() {
         onRequestClose={() => setShowPomodoroModal(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContainer, { maxHeight: screenHeight * 0.9 }]}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Configurações Pomodoro</Text>
+            </View>
+            
             <ScrollView 
               style={styles.modalScrollView}
-              contentContainerStyle={styles.modalScrollContent}
               showsVerticalScrollIndicator={false}
             >
-              <View style={styles.modalContent}>
-                <Text style={styles.modalTitle}>Configurações Pomodoro</Text>
-                
-                {/* Quick Settings */}
-                <View style={styles.quickSettingsSection}>
-                  <Text style={styles.quickSettingsTitle}>Configurações Rápidas</Text>
-                  <View style={styles.quickSettingsGrid}>
-                    {quickSettings.map((setting, index) => (
-                      <TouchableOpacity
-                        key={index}
-                        style={styles.quickSettingButton}
-                        onPress={() => applyQuickSetting(setting)}
-                      >
-                        <Text style={styles.quickSettingName}>{setting.name}</Text>
-                        <Text style={styles.quickSettingDetails}>
-                          {setting.workMinutes}min / {setting.breakMinutes}min
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
+              {/* Quick Settings */}
+              <View style={styles.quickSettingsSection}>
+                <Text style={styles.quickSettingsTitle}>Configurações Rápidas</Text>
+                <View style={styles.quickSettingsGrid}>
+                  {quickSettings.map((setting, index) => (
+                    <TouchableOpacity
+                      key={index}
+                      style={styles.quickSettingButton}
+                      onPress={() => applyQuickSetting(setting)}
+                    >
+                      <Text style={styles.quickSettingName}>{setting.name}</Text>
+                      <Text style={styles.quickSettingDetails}>
+                        {setting.workMinutes}min / {setting.breakMinutes}min
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
                 </View>
-                
-                {editingGoalId && (
-                  <PomodoroSettingsForm
-                    settings={dailyGoals.find(g => g.id === editingGoalId)?.pomodoroSettings}
-                    onSave={(settings) => {
-                      updatePomodoroSettings(editingGoalId, settings);
-                      setShowPomodoroModal(false);
-                      setEditingGoalId(null);
-                    }}
-                    onCancel={() => {
-                      setShowPomodoroModal(false);
-                      setEditingGoalId(null);
-                    }}
-                  />
-                )}
               </View>
+              
+              {editingGoalId && (
+                <PomodoroSettingsForm
+                  settings={dailyGoals.find(g => g.id === editingGoalId)?.pomodoroSettings}
+                  onSave={(settings) => {
+                    updatePomodoroSettings(editingGoalId, settings);
+                    setShowPomodoroModal(false);
+                    setEditingGoalId(null);
+                  }}
+                  onCancel={() => {
+                    setShowPomodoroModal(false);
+                    setEditingGoalId(null);
+                  }}
+                />
+              )}
             </ScrollView>
           </View>
         </View>
@@ -537,10 +535,15 @@ export default function TodayScreen() {
         onRequestClose={() => setShowFreeTimerModal(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { maxHeight: screenHeight * 0.6 }]}>
-            <ScrollView showsVerticalScrollIndicator={false}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Novo Cronômetro Livre</Text>
-              
+            </View>
+            
+            <ScrollView 
+              style={styles.modalScrollView}
+              showsVerticalScrollIndicator={false}
+            >
               <TextInput
                 style={styles.modalInput}
                 placeholder="Nome"
@@ -815,28 +818,24 @@ const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.8)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
+    justifyContent: 'flex-end',
   },
   modalContainer: {
     backgroundColor: '#2d3748',
-    borderRadius: 16,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: screenHeight * 0.85,
     width: '100%',
-    maxWidth: 400,
+  },
+  modalHeader: {
+    padding: 20,
+    paddingBottom: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#4a5568',
   },
   modalScrollView: {
     flex: 1,
-  },
-  modalScrollContent: {
-    padding: 24,
-  },
-  modalContent: {
-    backgroundColor: '#2d3748',
-    borderRadius: 16,
-    padding: 24,
-    width: '100%',
-    maxWidth: 400,
+    padding: 20,
   },
   modalTitle: {
     fontSize: 20,
@@ -849,7 +848,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#a0aec0',
     textAlign: 'center',
-    marginBottom: 20,
   },
   quickSettingsSection: {
     marginBottom: 20,
