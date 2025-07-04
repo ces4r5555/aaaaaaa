@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, TextInput, Modal, StyleSheet, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Plus, Search, ChevronRight, Clock, CircleCheck as CheckCircle, Circle, Filter, CreditCard as Edit3, Calendar, Eye, EyeOff, Trash2, Settings } from 'lucide-react-native';
+import { Plus, Search, ChevronRight, Clock, CircleCheck as CheckCircle, Circle, Filter, CreditCard as Edit3, Calendar, Eye, EyeOff, Trash2, Settings, ChevronUp, ChevronDown, Minimize2, Maximize2 } from 'lucide-react-native';
 
 interface Topic {
   id: string;
@@ -51,6 +51,9 @@ export default function MateriasScreen() {
           studyRecords: [
             { id: '1', date: new Date('2024-01-15'), studyTime: 60, questionsTotal: 25, questionsCorrect: 22 },
             { id: '2', date: new Date('2024-01-16'), studyTime: 60, questionsTotal: 25, questionsCorrect: 20 },
+            { id: '3', date: new Date('2024-01-17'), studyTime: 45, questionsTotal: 20, questionsCorrect: 18 },
+            { id: '4', date: new Date('2024-01-18'), studyTime: 30, questionsTotal: 15, questionsCorrect: 12 },
+            { id: '5', date: new Date('2024-01-19'), studyTime: 40, questionsTotal: 18, questionsCorrect: 16 },
           ]
         },
         { 
@@ -63,6 +66,8 @@ export default function MateriasScreen() {
           studyRecords: [
             { id: '3', date: new Date('2024-01-14'), studyTime: 90, questionsTotal: 40, questionsCorrect: 35 },
             { id: '4', date: new Date('2024-01-17'), studyTime: 90, questionsTotal: 35, questionsCorrect: 33 },
+            { id: '6', date: new Date('2024-01-20'), studyTime: 60, questionsTotal: 25, questionsCorrect: 22 },
+            { id: '7', date: new Date('2024-01-21'), studyTime: 45, questionsTotal: 20, questionsCorrect: 18 },
           ]
         },
         { 
@@ -74,6 +79,8 @@ export default function MateriasScreen() {
           difficulty: 'easy',
           studyRecords: [
             { id: '5', date: new Date('2024-01-18'), studyTime: 90, questionsTotal: 30, questionsCorrect: 25 },
+            { id: '8', date: new Date('2024-01-22'), studyTime: 30, questionsTotal: 12, questionsCorrect: 10 },
+            { id: '9', date: new Date('2024-01-23'), studyTime: 25, questionsTotal: 10, questionsCorrect: 9 },
           ]
         },
         { 
@@ -85,6 +92,7 @@ export default function MateriasScreen() {
           difficulty: 'medium',
           studyRecords: [
             { id: '6', date: new Date('2024-01-19'), studyTime: 75, questionsTotal: 25, questionsCorrect: 20 },
+            { id: '10', date: new Date('2024-01-24'), studyTime: 40, questionsTotal: 15, questionsCorrect: 12 },
           ]
         },
         { 
@@ -224,12 +232,13 @@ export default function MateriasScreen() {
   const [showEditTopicModal, setShowEditTopicModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [newSubjectText, setNewSubjectText] = useState('');
-  const [colorFilter, setColorFilter] = useState<'all' | 'red' | 'yellow' | 'green'>('all');
+  const [importanceFilter, setImportanceFilter] = useState<'all' | 'high' | 'medium' | 'low'>('all');
   const [expandedSubjects, setExpandedSubjects] = useState<string[]>([]);
   const [selectedTopic, setSelectedTopic] = useState<{ subjectId: string; topicId: string } | null>(null);
   const [editingSubject, setEditingSubject] = useState<Subject | null>(null);
   const [editingTopic, setEditingTopic] = useState<{ subjectId: string; topic: Topic } | null>(null);
   const [showRecords, setShowRecords] = useState<{ [key: string]: boolean }>({});
+  const [compactMode, setCompactMode] = useState(false);
   const [studyRecord, setStudyRecord] = useState({
     date: new Date().toISOString().split('T')[0],
     studyTime: 0,
@@ -449,15 +458,9 @@ export default function MateriasScreen() {
     
     if (!matchesSearch) return false;
     
-    if (colorFilter === 'all') return true;
+    if (importanceFilter === 'all') return true;
     
-    // Filtrar por cor baseado nos tópicos
-    const hasTopicsWithColor = subject.topics.some(topic => {
-      const topicColor = getTopicColor(topic);
-      return topicColor === colorFilter;
-    });
-    
-    return hasTopicsWithColor;
+    return subject.importance === importanceFilter;
   });
 
   const toggleSubject = (subjectId: string) => {
@@ -491,6 +494,16 @@ export default function MateriasScreen() {
         <Text style={styles.title}>Matérias & Tópicos</Text>
         <View style={styles.headerActions}>
           <TouchableOpacity
+            style={styles.compactButton}
+            onPress={() => setCompactMode(!compactMode)}
+          >
+            {compactMode ? (
+              <Maximize2 size={20} color="#a0aec0" />
+            ) : (
+              <Minimize2 size={20} color="#a0aec0" />
+            )}
+          </TouchableOpacity>
+          <TouchableOpacity
             style={styles.settingsButton}
             onPress={() => setShowSettingsModal(true)}
           >
@@ -520,28 +533,28 @@ export default function MateriasScreen() {
         
         <View style={styles.filterContainer}>
           <TouchableOpacity
-            style={[styles.filterButton, colorFilter === 'all' && styles.filterActive]}
-            onPress={() => setColorFilter('all')}
+            style={[styles.filterButton, importanceFilter === 'all' && styles.filterActive]}
+            onPress={() => setImportanceFilter('all')}
           >
-            <Text style={styles.filterText}>Todos</Text>
+            <Text style={styles.filterText}>Todas</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.filterButton, styles.filterRed, colorFilter === 'red' && styles.filterActive]}
-            onPress={() => setColorFilter('red')}
+            style={[styles.filterButton, styles.filterHigh, importanceFilter === 'high' && styles.filterActive]}
+            onPress={() => setImportanceFilter('high')}
           >
-            <Text style={styles.filterText}>🔴</Text>
+            <Text style={styles.filterText}>Alta</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.filterButton, styles.filterYellow, colorFilter === 'yellow' && styles.filterActive]}
-            onPress={() => setColorFilter('yellow')}
+            style={[styles.filterButton, styles.filterMedium, importanceFilter === 'medium' && styles.filterActive]}
+            onPress={() => setImportanceFilter('medium')}
           >
-            <Text style={styles.filterText}>🟡</Text>
+            <Text style={styles.filterText}>Média</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.filterButton, styles.filterGreen, colorFilter === 'green' && styles.filterActive]}
-            onPress={() => setColorFilter('green')}
+            style={[styles.filterButton, styles.filterLow, importanceFilter === 'low' && styles.filterActive]}
+            onPress={() => setImportanceFilter('low')}
           >
-            <Text style={styles.filterText}>🟢</Text>
+            <Text style={styles.filterText}>Baixa</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -617,6 +630,50 @@ export default function MateriasScreen() {
                         ? (topic.questionsCorrect / topic.questionsTotal) * 100 
                         : 0;
 
+                      if (compactMode) {
+                        return (
+                          <View key={topic.id} style={styles.topicCardCompact}>
+                            <View style={styles.topicHeaderCompact}>
+                              <View 
+                                style={[
+                                  styles.colorIndicatorLarge,
+                                  color === 'red' && styles.colorRed,
+                                  color === 'yellow' && styles.colorYellow,
+                                  color === 'green' && styles.colorGreen,
+                                  color === 'gray' && styles.colorGray,
+                                ]}
+                              />
+                              <Text style={styles.topicNameCompact} numberOfLines={2}>
+                                {topic.name}
+                              </Text>
+                            </View>
+                            <View style={styles.topicActionsCompact}>
+                              <TouchableOpacity
+                                style={styles.editTopicButtonCompact}
+                                onPress={() => {
+                                  setEditingTopic({ subjectId: subject.id, topic });
+                                  setShowEditTopicModal(true);
+                                }}
+                              >
+                                <Edit3 size={12} color="#a0aec0" />
+                              </TouchableOpacity>
+                              <TouchableOpacity
+                                style={styles.deleteTopicButtonCompact}
+                                onPress={() => deleteTopic(subject.id, topic.id)}
+                              >
+                                <Trash2 size={12} color="#e53e3e" />
+                              </TouchableOpacity>
+                              <TouchableOpacity
+                                style={styles.addStudyButtonCompact}
+                                onPress={() => openStudyModal(subject.id, topic.id)}
+                              >
+                                <Plus size={12} color="#48bb78" />
+                              </TouchableOpacity>
+                            </View>
+                          </View>
+                        );
+                      }
+
                       return (
                         <View key={topic.id} style={styles.topicCard}>
                           <View style={styles.topicHeader}>
@@ -690,16 +747,22 @@ export default function MateriasScreen() {
                           {showRecords[topic.id] && topic.studyRecords.length > 0 && (
                             <View style={styles.recordsSection}>
                               <Text style={styles.recordsTitle}>Registros:</Text>
-                              {topic.studyRecords.slice(-3).map((record) => (
-                                <View key={record.id} style={styles.recordItem}>
-                                  <Text style={styles.recordDate}>
-                                    {record.date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}
-                                  </Text>
-                                  <Text style={styles.recordDetails}>
-                                    {formatTime(record.studyTime)} • {record.questionsCorrect}/{record.questionsTotal}
-                                  </Text>
-                                </View>
-                              ))}
+                              <ScrollView 
+                                style={styles.recordsScrollView}
+                                showsVerticalScrollIndicator={true}
+                                nestedScrollEnabled={true}
+                              >
+                                {topic.studyRecords.slice(-5).map((record) => (
+                                  <View key={record.id} style={styles.recordItem}>
+                                    <Text style={styles.recordDate}>
+                                      {record.date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}
+                                    </Text>
+                                    <Text style={styles.recordDetails}>
+                                      {formatTime(record.studyTime)} • {record.questionsCorrect}/{record.questionsTotal}
+                                    </Text>
+                                  </View>
+                                ))}
+                              </ScrollView>
                             </View>
                           )}
                         </View>
@@ -708,7 +771,7 @@ export default function MateriasScreen() {
                   
                   {/* Add Topic Button */}
                   <TouchableOpacity
-                    style={styles.addTopicCard}
+                    style={compactMode ? styles.addTopicCardCompact : styles.addTopicCard}
                     onPress={() => {
                       const topicName = prompt('Nome do novo tópico:');
                       if (topicName) {
@@ -716,8 +779,10 @@ export default function MateriasScreen() {
                       }
                     }}
                   >
-                    <Plus size={20} color="#48bb78" />
-                    <Text style={styles.addTopicText}>Novo Tópico</Text>
+                    <Plus size={compactMode ? 16 : 20} color="#48bb78" />
+                    <Text style={compactMode ? styles.addTopicTextCompact : styles.addTopicText}>
+                      {compactMode ? 'Novo' : 'Novo Tópico'}
+                    </Text>
                   </TouchableOpacity>
                 </ScrollView>
               </View>
@@ -1132,6 +1197,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 12,
   },
+  compactButton: {
+    backgroundColor: '#4a5568',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   settingsButton: {
     backgroundColor: '#4a5568',
     width: 40,
@@ -1183,13 +1256,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#48bb78',
     borderColor: '#48bb78',
   },
-  filterRed: {
+  filterHigh: {
     backgroundColor: '#742a2a',
   },
-  filterYellow: {
+  filterMedium: {
     backgroundColor: '#744210',
   },
-  filterGreen: {
+  filterLow: {
     backgroundColor: '#22543d',
   },
   filterText: {
@@ -1275,7 +1348,22 @@ const styles = StyleSheet.create({
     width: 200,
     minHeight: 140,
   },
+  topicCardCompact: {
+    backgroundColor: '#1a202c',
+    borderRadius: 12,
+    padding: 8,
+    borderWidth: 1,
+    borderColor: '#4a5568',
+    width: 120,
+    minHeight: 80,
+    justifyContent: 'space-between',
+  },
   topicHeader: {
+    marginBottom: 8,
+  },
+  topicHeaderCompact: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 8,
   },
   topicInfo: {
@@ -1289,6 +1377,12 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     marginRight: 8,
     marginTop: 4,
+  },
+  colorIndicatorLarge: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    marginRight: 6,
   },
   colorRed: {
     backgroundColor: '#e53e3e',
@@ -1309,7 +1403,19 @@ const styles = StyleSheet.create({
     flex: 1,
     lineHeight: 18,
   },
+  topicNameCompact: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '600',
+    flex: 1,
+    lineHeight: 14,
+  },
   topicActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  topicActionsCompact: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -1320,11 +1426,20 @@ const styles = StyleSheet.create({
   editTopicButton: {
     padding: 2,
   },
+  editTopicButtonCompact: {
+    padding: 1,
+  },
   deleteTopicButton: {
     padding: 2,
   },
+  deleteTopicButtonCompact: {
+    padding: 1,
+  },
   addStudyButton: {
     padding: 2,
+  },
+  addStudyButtonCompact: {
+    padding: 1,
   },
   topicStats: {
     gap: 6,
@@ -1356,6 +1471,9 @@ const styles = StyleSheet.create({
     marginBottom: 6,
     fontWeight: 'bold',
   },
+  recordsScrollView: {
+    maxHeight: 60,
+  },
   recordItem: {
     paddingVertical: 2,
     paddingHorizontal: 4,
@@ -1385,9 +1503,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
   },
+  addTopicCardCompact: {
+    backgroundColor: '#1a202c',
+    borderRadius: 12,
+    padding: 8,
+    borderWidth: 2,
+    borderColor: '#48bb78',
+    borderStyle: 'dashed',
+    width: 80,
+    minHeight: 80,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 4,
+  },
   addTopicText: {
     color: '#48bb78',
     fontSize: 12,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  addTopicTextCompact: {
+    color: '#48bb78',
+    fontSize: 10,
     fontWeight: '600',
     textAlign: 'center',
   },

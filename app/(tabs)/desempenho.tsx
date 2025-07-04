@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { TrendingUp, Clock, Target, Award, Calendar, ChartBar as BarChart3, ChevronLeft, ChevronRight } from 'lucide-react-native';
+import { TrendingUp, Clock, Target, Award, Calendar, ChartBar as BarChart3, ChevronLeft, ChevronRight, ChevronUp, ChevronDown } from 'lucide-react-native';
 import { LineChart, BarChart } from 'react-native-chart-kit';
 
 const screenWidth = Dimensions.get('window').width;
@@ -19,6 +19,7 @@ type PeriodType = 'week' | 'month' | '3months' | '6months' | '1year' | 'all';
 export default function DesempenhoScreen() {
   const [selectedPeriod, setSelectedPeriod] = useState<PeriodType>('month');
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [periodSectionCollapsed, setPeriodSectionCollapsed] = useState(false);
   
   // Dados de performance que mudam baseado no período selecionado
   const getPerformanceDataForPeriod = (): PerformanceData[] => {
@@ -234,55 +235,70 @@ export default function DesempenhoScreen() {
         <Text style={styles.subtitle}>Acompanhe sua evolução nos estudos</Text>
       </View>
 
-      {/* Period Selector - Moved to top */}
+      {/* Period Selector - Collapsible */}
       <View style={styles.periodSection}>
-        <Text style={styles.sectionTitle}>Período de Análise</Text>
-        <View style={styles.periodButtons}>
-          {periods.map((period) => (
-            <TouchableOpacity
-              key={period.key}
-              style={[
-                styles.periodButton,
-                selectedPeriod === period.key && styles.periodButtonActive
-              ]}
-              onPress={() => {
-                setSelectedPeriod(period.key as PeriodType);
-                setCurrentDate(new Date());
-              }}
-            >
-              <Text style={[
-                styles.periodButtonText,
-                selectedPeriod === period.key && styles.periodButtonTextActive
-              ]}>
-                {period.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+        <TouchableOpacity 
+          style={styles.periodSectionHeader}
+          onPress={() => setPeriodSectionCollapsed(!periodSectionCollapsed)}
+        >
+          <Text style={styles.sectionTitle}>Período de Análise</Text>
+          {periodSectionCollapsed ? (
+            <ChevronDown size={20} color="#a0aec0" />
+          ) : (
+            <ChevronUp size={20} color="#a0aec0" />
+          )}
+        </TouchableOpacity>
         
-        {/* Period Navigation */}
-        {selectedPeriod !== 'all' && (
-          <View style={styles.periodNavigation}>
-            <TouchableOpacity
-              style={styles.periodNavButton}
-              onPress={() => navigatePeriod('prev')}
-            >
-              <ChevronLeft size={20} color="#a0aec0" />
-            </TouchableOpacity>
+        {!periodSectionCollapsed && (
+          <>
+            <View style={styles.periodButtons}>
+              {periods.map((period) => (
+                <TouchableOpacity
+                  key={period.key}
+                  style={[
+                    styles.periodButton,
+                    selectedPeriod === period.key && styles.periodButtonActive
+                  ]}
+                  onPress={() => {
+                    setSelectedPeriod(period.key as PeriodType);
+                    setCurrentDate(new Date());
+                  }}
+                >
+                  <Text style={[
+                    styles.periodButtonText,
+                    selectedPeriod === period.key && styles.periodButtonTextActive
+                  ]}>
+                    {period.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
             
-            <Text style={styles.periodLabel}>{getPeriodLabel()}</Text>
+            {/* Period Navigation */}
+            {selectedPeriod !== 'all' && (
+              <View style={styles.periodNavigation}>
+                <TouchableOpacity
+                  style={styles.periodNavButton}
+                  onPress={() => navigatePeriod('prev')}
+                >
+                  <ChevronLeft size={20} color="#a0aec0" />
+                </TouchableOpacity>
+                
+                <Text style={styles.periodLabel}>{getPeriodLabel()}</Text>
+                
+                <TouchableOpacity
+                  style={styles.periodNavButton}
+                  onPress={() => navigatePeriod('next')}
+                >
+                  <ChevronRight size={20} color="#a0aec0" />
+                </TouchableOpacity>
+              </View>
+            )}
             
-            <TouchableOpacity
-              style={styles.periodNavButton}
-              onPress={() => navigatePeriod('next')}
-            >
-              <ChevronRight size={20} color="#a0aec0" />
-            </TouchableOpacity>
-          </View>
-        )}
-        
-        {selectedPeriod === 'all' && (
-          <Text style={styles.periodLabel}>{getPeriodLabel()}</Text>
+            {selectedPeriod === 'all' && (
+              <Text style={styles.periodLabel}>{getPeriodLabel()}</Text>
+            )}
+          </>
         )}
       </View>
 
@@ -367,7 +383,7 @@ export default function DesempenhoScreen() {
                   {item.subject}
                 </Text>
                 <Text style={styles.tableCell}>{formatTime(item.studyTime)}</Text>
-                <Text style={styles.tableCell}>{item.questionsTotal}</Text>
+                <Text style={styles.tableCell}>{item.questionsCorrect}/{item.questionsTotal}</Text>
                 <Text style={[styles.tableCell, styles.accuracyCell]}>
                   {item.accuracy.toFixed(1)}%
                 </Text>
@@ -484,11 +500,16 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#4a5568',
   },
+  periodSectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#ffffff',
-    marginBottom: 16,
   },
   periodButtons: {
     flexDirection: 'row',
