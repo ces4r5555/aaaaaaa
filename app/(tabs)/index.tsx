@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Modal, TextInput } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Modal, TextInput, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Play, Pause, Square, Calendar, Clock, Settings, Plus } from 'lucide-react-native';
 import { DailyGoalCard } from '@/components/DailyGoalCard';
 import { ProgressBar } from '@/components/ProgressBar';
 import { CalendarGrid } from '@/components/CalendarGrid';
+
+const { height: screenHeight } = Dimensions.get('window');
 
 interface PomodoroSettings {
   workMinutes: number;
@@ -424,7 +426,7 @@ export default function TodayScreen() {
         onRequestClose={() => setShowGlobalSettingsModal(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
+          <View style={[styles.modalContainer, { maxHeight: screenHeight * 0.9 }]}>
             <ScrollView 
               style={styles.modalScrollView}
               contentContainerStyle={styles.modalScrollContent}
@@ -479,7 +481,7 @@ export default function TodayScreen() {
         onRequestClose={() => setShowPomodoroModal(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
+          <View style={[styles.modalContainer, { maxHeight: screenHeight * 0.9 }]}>
             <ScrollView 
               style={styles.modalScrollView}
               contentContainerStyle={styles.modalScrollContent}
@@ -535,31 +537,33 @@ export default function TodayScreen() {
         onRequestClose={() => setShowFreeTimerModal(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Novo Cronômetro Livre</Text>
-            
-            <TextInput
-              style={styles.modalInput}
-              placeholder="Nome"
-              placeholderTextColor="#a0aec0"
-              value={newFreeTimer.subject}
-              onChangeText={(text) => setNewFreeTimer({ subject: text })}
-            />
-            
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton]}
-                onPress={() => setShowFreeTimerModal(false)}
-              >
-                <Text style={styles.cancelButtonText}>Cancelar</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.saveButton]}
-                onPress={addFreeTimer}
-              >
-                <Text style={styles.saveButtonText}>Criar</Text>
-              </TouchableOpacity>
-            </View>
+          <View style={[styles.modalContent, { maxHeight: screenHeight * 0.6 }]}>
+            <ScrollView showsVerticalScrollIndicator={false}>
+              <Text style={styles.modalTitle}>Novo Cronômetro Livre</Text>
+              
+              <TextInput
+                style={styles.modalInput}
+                placeholder="Nome"
+                placeholderTextColor="#a0aec0"
+                value={newFreeTimer.subject}
+                onChangeText={(text) => setNewFreeTimer({ subject: text })}
+              />
+              
+              <View style={styles.modalButtons}>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.cancelButton]}
+                  onPress={() => setShowFreeTimerModal(false)}
+                >
+                  <Text style={styles.cancelButtonText}>Cancelar</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.saveButton]}
+                  onPress={addFreeTimer}
+                >
+                  <Text style={styles.saveButtonText}>Criar</Text>
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
           </View>
         </View>
       </Modal>
@@ -820,7 +824,6 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     width: '100%',
     maxWidth: 400,
-    maxHeight: '85%',
   },
   modalScrollView: {
     flex: 1,

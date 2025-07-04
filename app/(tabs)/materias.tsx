@@ -1,24 +1,29 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, TextInput, Modal, StyleSheet, Alert } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Modal, TextInput, Alert, StyleSheet, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Plus, Search, ChevronRight, Clock, CircleCheck as CheckCircle, Circle, Filter, CreditCard as Edit3, Calendar, Eye, EyeOff, Trash2, Settings, ChevronUp, ChevronDown, Minimize2, Maximize2 } from 'lucide-react-native';
+import { Plus, Search, Eye, EyeOff, Settings, Play, Pause, Square, Clock, BookOpen, Target, Trash2, Edit3, ChevronUp, ChevronDown, Minimize2, Maximize2 } from 'lucide-react-native';
 
-interface Topic {
-  id: string;
-  name: string;
-  studyTime: number; // minutes
-  questionsTotal: number;
-  questionsCorrect: number;
-  difficulty: 'easy' | 'medium' | 'hard';
-  studyRecords: StudyRecord[];
-}
+const { height: screenHeight } = Dimensions.get('window');
 
 interface StudyRecord {
   id: string;
   date: Date;
-  studyTime: number;
-  questionsTotal: number;
+  timeSpent: number; // minutes
+  questionsAnswered: number;
   questionsCorrect: number;
+  notes?: string;
+}
+
+interface Topic {
+  id: string;
+  name: string;
+  totalTime: number; // minutes
+  questionsAnswered: number;
+  questionsCorrect: number;
+  accuracy: number;
+  status: 'not-started' | 'in-progress' | 'completed';
+  isRunning: boolean;
+  records: StudyRecord[];
 }
 
 interface Subject {
@@ -26,13 +31,13 @@ interface Subject {
   name: string;
   importance: 'high' | 'medium' | 'low';
   topics: Topic[];
+  totalTime: number;
+  totalQuestions: number;
+  totalCorrect: number;
+  overallAccuracy: number;
 }
 
-interface AccuracySettings {
-  red: { min: number; max: number };
-  yellow: { min: number; max: number };
-  green: { min: number; max: number };
-}
+type ImportanceFilter = 'all' | 'high' | 'medium' | 'low';
 
 export default function MateriasScreen() {
   const [subjects, setSubjects] = useState<Subject[]>([
@@ -40,324 +45,367 @@ export default function MateriasScreen() {
       id: '1',
       name: 'Direito Constitucional',
       importance: 'high',
+      totalTime: 480,
+      totalQuestions: 150,
+      totalCorrect: 128,
+      overallAccuracy: 85.3,
       topics: [
-        { 
-          id: '1-1', 
-          name: 'Princípios Fundamentais', 
-          studyTime: 120, 
-          questionsTotal: 50, 
-          questionsCorrect: 42, 
-          difficulty: 'medium',
-          studyRecords: [
-            { id: '1', date: new Date('2024-01-15'), studyTime: 60, questionsTotal: 25, questionsCorrect: 22 },
-            { id: '2', date: new Date('2024-01-16'), studyTime: 60, questionsTotal: 25, questionsCorrect: 20 },
-            { id: '3', date: new Date('2024-01-17'), studyTime: 45, questionsTotal: 20, questionsCorrect: 18 },
-            { id: '4', date: new Date('2024-01-18'), studyTime: 30, questionsTotal: 15, questionsCorrect: 12 },
-            { id: '5', date: new Date('2024-01-19'), studyTime: 40, questionsTotal: 18, questionsCorrect: 16 },
+        {
+          id: '1-1',
+          name: 'Princípios Fundamentais',
+          totalTime: 120,
+          questionsAnswered: 42,
+          questionsCorrect: 35,
+          accuracy: 83.3,
+          status: 'in-progress',
+          isRunning: false,
+          records: [
+            { id: '1', date: new Date('2024-01-15'), timeSpent: 45, questionsAnswered: 15, questionsCorrect: 12, notes: 'Revisão dos artigos 1-4' },
+            { id: '2', date: new Date('2024-01-14'), timeSpent: 30, questionsAnswered: 12, questionsCorrect: 10, notes: 'Exercícios práticos' },
+            { id: '3', date: new Date('2024-01-13'), timeSpent: 45, questionsAnswered: 15, questionsCorrect: 13, notes: 'Teoria geral' },
           ]
         },
-        { 
-          id: '1-2', 
-          name: 'Direitos Fundamentais', 
-          studyTime: 180, 
-          questionsTotal: 75, 
-          questionsCorrect: 68, 
-          difficulty: 'hard',
-          studyRecords: [
-            { id: '3', date: new Date('2024-01-14'), studyTime: 90, questionsTotal: 40, questionsCorrect: 35 },
-            { id: '4', date: new Date('2024-01-17'), studyTime: 90, questionsTotal: 35, questionsCorrect: 33 },
-            { id: '6', date: new Date('2024-01-20'), studyTime: 60, questionsTotal: 25, questionsCorrect: 22 },
-            { id: '7', date: new Date('2024-01-21'), studyTime: 45, questionsTotal: 20, questionsCorrect: 18 },
+        {
+          id: '1-2',
+          name: 'Direitos Fundamentais',
+          totalTime: 180,
+          questionsAnswered: 68,
+          questionsCorrect: 62,
+          accuracy: 91.2,
+          status: 'completed',
+          isRunning: false,
+          records: [
+            { id: '4', date: new Date('2024-01-12'), timeSpent: 60, questionsAnswered: 20, questionsCorrect: 18, notes: 'Direitos individuais' },
+            { id: '5', date: new Date('2024-01-11'), timeSpent: 50, questionsAnswered: 18, questionsCorrect: 16, notes: 'Direitos coletivos' },
+            { id: '6', date: new Date('2024-01-10'), timeSpent: 70, questionsAnswered: 30, questionsCorrect: 28, notes: 'Revisão geral' },
           ]
         },
-        { 
-          id: '1-3', 
-          name: 'Organização do Estado', 
-          studyTime: 90, 
-          questionsTotal: 30, 
-          questionsCorrect: 25, 
-          difficulty: 'easy',
-          studyRecords: [
-            { id: '5', date: new Date('2024-01-18'), studyTime: 90, questionsTotal: 30, questionsCorrect: 25 },
-            { id: '8', date: new Date('2024-01-22'), studyTime: 30, questionsTotal: 12, questionsCorrect: 10 },
-            { id: '9', date: new Date('2024-01-23'), studyTime: 25, questionsTotal: 10, questionsCorrect: 9 },
+        {
+          id: '1-3',
+          name: 'Organização do Estado',
+          totalTime: 180,
+          questionsAnswered: 40,
+          questionsCorrect: 31,
+          accuracy: 77.5,
+          status: 'in-progress',
+          isRunning: false,
+          records: [
+            { id: '7', date: new Date('2024-01-09'), timeSpent: 90, questionsAnswered: 25, questionsCorrect: 19, notes: 'Poderes da República' },
+            { id: '8', date: new Date('2024-01-08'), timeSpent: 90, questionsAnswered: 15, questionsCorrect: 12, notes: 'Federalismo' },
           ]
-        },
-        { 
-          id: '1-4', 
-          name: 'Poder Executivo', 
-          studyTime: 75, 
-          questionsTotal: 25, 
-          questionsCorrect: 20, 
-          difficulty: 'medium',
-          studyRecords: [
-            { id: '6', date: new Date('2024-01-19'), studyTime: 75, questionsTotal: 25, questionsCorrect: 20 },
-            { id: '10', date: new Date('2024-01-24'), studyTime: 40, questionsTotal: 15, questionsCorrect: 12 },
-          ]
-        },
-        { 
-          id: '1-5', 
-          name: 'Poder Legislativo', 
-          studyTime: 60, 
-          questionsTotal: 20, 
-          questionsCorrect: 18, 
-          difficulty: 'easy',
-          studyRecords: [
-            { id: '7', date: new Date('2024-01-20'), studyTime: 60, questionsTotal: 20, questionsCorrect: 18 },
-          ]
-        },
-        { 
-          id: '1-6', 
-          name: 'Poder Judiciário', 
-          studyTime: 45, 
-          questionsTotal: 15, 
-          questionsCorrect: 12, 
-          difficulty: 'hard',
-          studyRecords: [
-            { id: '8', date: new Date('2024-01-21'), studyTime: 45, questionsTotal: 15, questionsCorrect: 12 },
-          ]
-        },
+        }
       ]
     },
     {
       id: '2',
       name: 'Matemática',
       importance: 'high',
+      totalTime: 360,
+      totalQuestions: 120,
+      totalCorrect: 90,
+      overallAccuracy: 75.0,
       topics: [
-        { 
-          id: '2-1', 
-          name: 'Álgebra', 
-          studyTime: 150, 
-          questionsTotal: 40, 
-          questionsCorrect: 30, 
-          difficulty: 'medium',
-          studyRecords: [
-            { id: '9', date: new Date('2024-01-12'), studyTime: 75, questionsTotal: 20, questionsCorrect: 15 },
-            { id: '10', date: new Date('2024-01-19'), studyTime: 75, questionsTotal: 20, questionsCorrect: 15 },
+        {
+          id: '2-1',
+          name: 'Álgebra Linear',
+          totalTime: 120,
+          questionsAnswered: 40,
+          questionsCorrect: 32,
+          accuracy: 80.0,
+          status: 'in-progress',
+          isRunning: false,
+          records: [
+            { id: '9', date: new Date('2024-01-15'), timeSpent: 60, questionsAnswered: 20, questionsCorrect: 16, notes: 'Matrizes e determinantes' },
+            { id: '10', date: new Date('2024-01-14'), timeSpent: 60, questionsAnswered: 20, questionsCorrect: 16, notes: 'Sistemas lineares' },
           ]
         },
-        { 
-          id: '2-2', 
-          name: 'Geometria', 
-          studyTime: 60, 
-          questionsTotal: 20, 
-          questionsCorrect: 15, 
-          difficulty: 'hard',
-          studyRecords: [
-            { id: '11', date: new Date('2024-01-20'), studyTime: 60, questionsTotal: 20, questionsCorrect: 15 },
+        {
+          id: '2-2',
+          name: 'Geometria',
+          totalTime: 240,
+          questionsAnswered: 80,
+          questionsCorrect: 58,
+          accuracy: 72.5,
+          status: 'in-progress',
+          isRunning: false,
+          records: [
+            { id: '11', date: new Date('2024-01-13'), timeSpent: 120, questionsAnswered: 40, questionsCorrect: 28, notes: 'Geometria plana' },
+            { id: '12', date: new Date('2024-01-12'), timeSpent: 120, questionsAnswered: 40, questionsCorrect: 30, notes: 'Geometria espacial' },
           ]
-        },
-        { 
-          id: '2-3', 
-          name: 'Estatística', 
-          studyTime: 90, 
-          questionsTotal: 30, 
-          questionsCorrect: 22, 
-          difficulty: 'medium',
-          studyRecords: [
-            { id: '12', date: new Date('2024-01-22'), studyTime: 90, questionsTotal: 30, questionsCorrect: 22 },
-          ]
-        },
-        { 
-          id: '2-4', 
-          name: 'Probabilidade', 
-          studyTime: 45, 
-          questionsTotal: 15, 
-          questionsCorrect: 10, 
-          difficulty: 'hard',
-          studyRecords: [
-            { id: '13', date: new Date('2024-01-23'), studyTime: 45, questionsTotal: 15, questionsCorrect: 10 },
-          ]
-        },
+        }
       ]
     },
     {
       id: '3',
       name: 'Português',
       importance: 'medium',
+      totalTime: 240,
+      totalQuestions: 80,
+      totalCorrect: 68,
+      overallAccuracy: 85.0,
       topics: [
-        { 
-          id: '3-1', 
-          name: 'Sintaxe', 
-          studyTime: 90, 
-          questionsTotal: 35, 
-          questionsCorrect: 28, 
-          difficulty: 'medium',
-          studyRecords: [
-            { id: '14', date: new Date('2024-01-13'), studyTime: 45, questionsTotal: 18, questionsCorrect: 14 },
-            { id: '15', date: new Date('2024-01-21'), studyTime: 45, questionsTotal: 17, questionsCorrect: 14 },
+        {
+          id: '3-1',
+          name: 'Gramática',
+          totalTime: 120,
+          questionsAnswered: 40,
+          questionsCorrect: 34,
+          accuracy: 85.0,
+          status: 'completed',
+          isRunning: false,
+          records: [
+            { id: '13', date: new Date('2024-01-11'), timeSpent: 60, questionsAnswered: 20, questionsCorrect: 17, notes: 'Sintaxe' },
+            { id: '14', date: new Date('2024-01-10'), timeSpent: 60, questionsAnswered: 20, questionsCorrect: 17, notes: 'Morfologia' },
           ]
         },
-        { 
-          id: '3-2', 
-          name: 'Semântica', 
-          studyTime: 45, 
-          questionsTotal: 15, 
-          questionsCorrect: 10, 
-          difficulty: 'easy',
-          studyRecords: [
-            { id: '16', date: new Date('2024-01-22'), studyTime: 45, questionsTotal: 15, questionsCorrect: 10 },
+        {
+          id: '3-2',
+          name: 'Interpretação de Texto',
+          totalTime: 120,
+          questionsAnswered: 40,
+          questionsCorrect: 34,
+          accuracy: 85.0,
+          status: 'in-progress',
+          isRunning: false,
+          records: [
+            { id: '15', date: new Date('2024-01-09'), timeSpent: 60, questionsAnswered: 20, questionsCorrect: 17, notes: 'Textos dissertativos' },
+            { id: '16', date: new Date('2024-01-08'), timeSpent: 60, questionsAnswered: 20, questionsCorrect: 17, notes: 'Textos narrativos' },
+          ]
+        }
+      ]
+    },
+    {
+      id: '4',
+      name: 'Informática',
+      importance: 'low',
+      totalTime: 180,
+      totalQuestions: 60,
+      totalCorrect: 48,
+      overallAccuracy: 80.0,
+      topics: [
+        {
+          id: '4-1',
+          name: 'Hardware',
+          totalTime: 90,
+          questionsAnswered: 30,
+          questionsCorrect: 24,
+          accuracy: 80.0,
+          status: 'completed',
+          isRunning: false,
+          records: [
+            { id: '17', date: new Date('2024-01-07'), timeSpent: 90, questionsAnswered: 30, questionsCorrect: 24, notes: 'Componentes básicos' },
           ]
         },
-        { 
-          id: '3-3', 
-          name: 'Morfologia', 
-          studyTime: 60, 
-          questionsTotal: 20, 
-          questionsCorrect: 16, 
-          difficulty: 'easy',
-          studyRecords: [
-            { id: '17', date: new Date('2024-01-24'), studyTime: 60, questionsTotal: 20, questionsCorrect: 16 },
+        {
+          id: '4-2',
+          name: 'Software',
+          totalTime: 90,
+          questionsAnswered: 30,
+          questionsCorrect: 24,
+          accuracy: 80.0,
+          status: 'in-progress',
+          isRunning: false,
+          records: [
+            { id: '18', date: new Date('2024-01-06'), timeSpent: 90, questionsAnswered: 30, questionsCorrect: 24, notes: 'Sistemas operacionais' },
           ]
-        },
-        { 
-          id: '3-4', 
-          name: 'Interpretação de Texto', 
-          studyTime: 120, 
-          questionsTotal: 40, 
-          questionsCorrect: 35, 
-          difficulty: 'medium',
-          studyRecords: [
-            { id: '18', date: new Date('2024-01-25'), studyTime: 120, questionsTotal: 40, questionsCorrect: 35 },
-          ]
-        },
+        }
       ]
     }
   ]);
 
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [importanceFilter, setImportanceFilter] = useState<ImportanceFilter>('all');
   const [showAddModal, setShowAddModal] = useState(false);
-  const [showStudyModal, setShowStudyModal] = useState(false);
-  const [showEditSubjectModal, setShowEditSubjectModal] = useState(false);
-  const [showEditTopicModal, setShowEditTopicModal] = useState(false);
-  const [showSettingsModal, setShowSettingsModal] = useState(false);
-  const [newSubjectText, setNewSubjectText] = useState('');
-  const [importanceFilter, setImportanceFilter] = useState<'all' | 'high' | 'medium' | 'low'>('all');
-  const [expandedSubjects, setExpandedSubjects] = useState<string[]>([]);
-  const [selectedTopic, setSelectedTopic] = useState<{ subjectId: string; topicId: string } | null>(null);
-  const [editingSubject, setEditingSubject] = useState<Subject | null>(null);
-  const [editingTopic, setEditingTopic] = useState<{ subjectId: string; topic: Topic } | null>(null);
-  const [showRecords, setShowRecords] = useState<{ [key: string]: boolean }>({});
+  const [showTopicModal, setShowTopicModal] = useState(false);
+  const [showRecordModal, setShowRecordModal] = useState(false);
+  const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
+  const [selectedTopic, setSelectedTopic] = useState<Topic | null>(null);
+  const [activeTimer, setActiveTimer] = useState<string | null>(null);
   const [compactMode, setCompactMode] = useState(false);
-  const [studyRecord, setStudyRecord] = useState({
-    date: new Date().toISOString().split('T')[0],
-    studyTime: 0,
-    questionsTotal: 0,
-    questionsCorrect: 0,
+  const [newSubject, setNewSubject] = useState({ name: '', importance: 'medium' as const });
+  const [newTopic, setNewTopic] = useState({ name: '' });
+  const [newRecord, setNewRecord] = useState({
+    timeSpent: '',
+    questionsAnswered: '',
+    questionsCorrect: '',
+    notes: ''
   });
 
-  // Configurações de precisão personalizáveis
-  const [accuracySettings, setAccuracySettings] = useState<AccuracySettings>({
-    red: { min: 0, max: 70 },
-    yellow: { min: 70, max: 80 },
-    green: { min: 80, max: 100 },
-  });
-
-  const parseSubjectInput = (input: string) => {
-    const subjects = input.split(';').map(s => s.trim()).filter(Boolean);
-    return subjects.map(subject => {
-      const [name, topicsStr] = subject.split(':');
-      const topics = topicsStr ? topicsStr.split(',').map(t => t.trim()).filter(Boolean) : [];
-      return { name: name.trim(), topics };
-    });
-  };
-
-  const addSubjects = () => {
-    if (!newSubjectText.trim()) return;
-
-    try {
-      const parsedSubjects = parseSubjectInput(newSubjectText);
-      const newSubjects: Subject[] = parsedSubjects.map((parsed, index) => ({
-        id: Date.now() + index + '',
-        name: parsed.name,
-        importance: 'medium' as const,
-        topics: parsed.topics.map((topicName, topicIndex) => ({
-          id: `${Date.now() + index}_${topicIndex}`,
-          name: topicName,
-          studyTime: 0,
-          questionsTotal: 0,
-          questionsCorrect: 0,
-          difficulty: 'easy' as const,
-          studyRecords: [],
-        }))
-      }));
-
-      setSubjects(prev => [...prev, ...newSubjects]);
-      setNewSubjectText('');
-      setShowAddModal(false);
-      Alert.alert('Sucesso', `${newSubjects.length} matéria(s) adicionada(s)!`);
-    } catch (error) {
-      Alert.alert('Erro', 'Formato inválido. Use: MATÉRIA:ASSUNTO,ASSUNTO;MATÉRIA...');
+  // Timer effect
+  React.useEffect(() => {
+    let interval: NodeJS.Timeout;
+    
+    if (activeTimer) {
+      interval = setInterval(() => {
+        setSubjects(prev => prev.map(subject => ({
+          ...subject,
+          topics: subject.topics.map(topic => {
+            if (topic.id === activeTimer && topic.isRunning) {
+              return {
+                ...topic,
+                totalTime: topic.totalTime + (1/60) // Add 1 second in minutes
+              };
+            }
+            return topic;
+          })
+        })));
+      }, 1000);
     }
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [activeTimer]);
+
+  const filteredSubjects = subjects.filter(subject => {
+    const matchesSearch = subject.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         subject.topics.some(topic => topic.name.toLowerCase().includes(searchQuery.toLowerCase()));
+    const matchesImportance = importanceFilter === 'all' || subject.importance === importanceFilter;
+    return matchesSearch && matchesImportance;
+  });
+
+  const handleTopicControl = (subjectId: string, topicId: string, action: 'start' | 'pause' | 'stop') => {
+    setSubjects(prev => prev.map(subject => {
+      if (subject.id === subjectId) {
+        return {
+          ...subject,
+          topics: subject.topics.map(topic => {
+            if (topic.id === topicId) {
+              switch (action) {
+                case 'start':
+                  setActiveTimer(topicId);
+                  return { ...topic, status: 'in-progress', isRunning: true };
+                case 'pause':
+                  setActiveTimer(null);
+                  return { ...topic, isRunning: false };
+                case 'stop':
+                  setActiveTimer(null);
+                  return { ...topic, status: 'not-started', isRunning: false };
+                default:
+                  return topic;
+              }
+            } else if (action === 'start') {
+              return { ...topic, isRunning: false };
+            }
+            return topic;
+          })
+        };
+      } else if (action === 'start') {
+        return {
+          ...subject,
+          topics: subject.topics.map(topic => ({ ...topic, isRunning: false }))
+        };
+      }
+      return subject;
+    }));
   };
 
-  const updateSubject = () => {
-    if (!editingSubject) return;
+  const addSubject = () => {
+    if (!newSubject.name.trim()) {
+      Alert.alert('Erro', 'Digite o nome da matéria');
+      return;
+    }
 
-    setSubjects(prev => prev.map(subject => 
-      subject.id === editingSubject.id ? editingSubject : subject
-    ));
-    setEditingSubject(null);
-    setShowEditSubjectModal(false);
-    Alert.alert('Sucesso', 'Matéria atualizada!');
-  };
-
-  const deleteSubject = (subjectId: string) => {
-    Alert.alert(
-      'Confirmar Exclusão',
-      'Tem certeza que deseja excluir esta matéria e todos os seus tópicos?',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Excluir',
-          style: 'destructive',
-          onPress: () => {
-            setSubjects(prev => prev.filter(s => s.id !== subjectId));
-            Alert.alert('Sucesso', 'Matéria excluída!');
-          },
-        },
-      ]
-    );
-  };
-
-  const addTopicToSubject = (subjectId: string, topicName: string) => {
-    if (!topicName.trim()) return;
-
-    const newTopic: Topic = {
+    const subject: Subject = {
       id: Date.now().toString(),
-      name: topicName,
-      studyTime: 0,
-      questionsTotal: 0,
+      name: newSubject.name,
+      importance: newSubject.importance,
+      topics: [],
+      totalTime: 0,
+      totalQuestions: 0,
+      totalCorrect: 0,
+      overallAccuracy: 0
+    };
+
+    setSubjects(prev => [...prev, subject]);
+    setNewSubject({ name: '', importance: 'medium' });
+    setShowAddModal(false);
+    Alert.alert('Sucesso', 'Matéria adicionada com sucesso!');
+  };
+
+  const addTopic = () => {
+    if (!newTopic.name.trim() || !selectedSubject) {
+      Alert.alert('Erro', 'Digite o nome do tópico');
+      return;
+    }
+
+    const topic: Topic = {
+      id: `${selectedSubject.id}-${Date.now()}`,
+      name: newTopic.name,
+      totalTime: 0,
+      questionsAnswered: 0,
       questionsCorrect: 0,
-      difficulty: 'easy',
-      studyRecords: [],
+      accuracy: 0,
+      status: 'not-started',
+      isRunning: false,
+      records: []
     };
 
     setSubjects(prev => prev.map(subject => 
-      subject.id === subjectId 
-        ? { ...subject, topics: [...subject.topics, newTopic] }
+      subject.id === selectedSubject.id 
+        ? { ...subject, topics: [...subject.topics, topic] }
         : subject
     ));
+
+    setNewTopic({ name: '' });
+    setShowTopicModal(false);
+    Alert.alert('Sucesso', 'Tópico adicionado com sucesso!');
   };
 
-  const updateTopic = () => {
-    if (!editingTopic) return;
+  const addRecord = () => {
+    if (!selectedTopic || !selectedSubject || !newRecord.timeSpent || !newRecord.questionsAnswered || !newRecord.questionsCorrect) {
+      Alert.alert('Erro', 'Preencha todos os campos obrigatórios');
+      return;
+    }
+
+    const timeSpent = parseInt(newRecord.timeSpent);
+    const questionsAnswered = parseInt(newRecord.questionsAnswered);
+    const questionsCorrect = parseInt(newRecord.questionsCorrect);
+
+    if (questionsCorrect > questionsAnswered) {
+      Alert.alert('Erro', 'Questões corretas não pode ser maior que questões respondidas');
+      return;
+    }
+
+    const record: StudyRecord = {
+      id: Date.now().toString(),
+      date: new Date(),
+      timeSpent,
+      questionsAnswered,
+      questionsCorrect,
+      notes: newRecord.notes
+    };
 
     setSubjects(prev => prev.map(subject => {
-      if (subject.id === editingTopic.subjectId) {
+      if (subject.id === selectedSubject.id) {
         return {
           ...subject,
-          topics: subject.topics.map(topic => 
-            topic.id === editingTopic.topic.id ? editingTopic.topic : topic
-          )
+          topics: subject.topics.map(topic => {
+            if (topic.id === selectedTopic.id) {
+              const newTotalTime = topic.totalTime + timeSpent;
+              const newTotalQuestions = topic.questionsAnswered + questionsAnswered;
+              const newTotalCorrect = topic.questionsCorrect + questionsCorrect;
+              const newAccuracy = newTotalQuestions > 0 ? (newTotalCorrect / newTotalQuestions) * 100 : 0;
+
+              return {
+                ...topic,
+                totalTime: newTotalTime,
+                questionsAnswered: newTotalQuestions,
+                questionsCorrect: newTotalCorrect,
+                accuracy: newAccuracy,
+                records: [...topic.records, record]
+              };
+            }
+            return topic;
+          })
         };
       }
       return subject;
     }));
 
-    setEditingTopic(null);
-    setShowEditTopicModal(false);
-    Alert.alert('Sucesso', 'Tópico atualizado!');
+    setNewRecord({ timeSpent: '', questionsAnswered: '', questionsCorrect: '', notes: '' });
+    setShowRecordModal(false);
+    Alert.alert('Sucesso', 'Registro adicionado com sucesso!');
   };
 
   const deleteTopic = (subjectId: string, topicId: string) => {
@@ -372,68 +420,30 @@ export default function MateriasScreen() {
           onPress: () => {
             setSubjects(prev => prev.map(subject => 
               subject.id === subjectId 
-                ? { ...subject, topics: subject.topics.filter(t => t.id !== topicId) }
+                ? { ...subject, topics: subject.topics.filter(topic => topic.id !== topicId) }
                 : subject
             ));
-            Alert.alert('Sucesso', 'Tópico excluído!');
           },
         },
       ]
     );
   };
 
-  const addStudyRecord = () => {
-    if (!selectedTopic) return;
-
-    const newRecord: StudyRecord = {
-      id: Date.now().toString(),
-      date: new Date(studyRecord.date),
-      studyTime: studyRecord.studyTime,
-      questionsTotal: studyRecord.questionsTotal,
-      questionsCorrect: studyRecord.questionsCorrect,
-    };
-
-    setSubjects(prev => prev.map(subject => {
-      if (subject.id === selectedTopic.subjectId) {
-        return {
-          ...subject,
-          topics: subject.topics.map(topic => {
-            if (topic.id === selectedTopic.topicId) {
-              return {
-                ...topic,
-                studyTime: topic.studyTime + studyRecord.studyTime,
-                questionsTotal: topic.questionsTotal + studyRecord.questionsTotal,
-                questionsCorrect: topic.questionsCorrect + studyRecord.questionsCorrect,
-                studyRecords: [...topic.studyRecords, newRecord],
-              };
-            }
-            return topic;
-          })
-        };
-      }
-      return subject;
-    }));
-
-    setStudyRecord({
-      date: new Date().toISOString().split('T')[0],
-      studyTime: 0,
-      questionsTotal: 0,
-      questionsCorrect: 0,
-    });
-    setSelectedTopic(null);
-    setShowStudyModal(false);
-    Alert.alert('Sucesso', 'Registro de estudo adicionado!');
+  const formatTime = (minutes: number) => {
+    const hours = Math.floor(minutes / 60);
+    const mins = Math.floor(minutes % 60);
+    const secs = Math.floor((minutes % 1) * 60);
+    
+    if (hours > 0) {
+      return `${hours}h ${mins}min`;
+    }
+    return `${mins}min ${secs}s`;
   };
 
-  const getTopicColor = (topic: Topic) => {
-    if (topic.questionsTotal === 0) return 'gray';
-    const accuracy = (topic.questionsCorrect / topic.questionsTotal) * 100;
-    
-    if (accuracy >= accuracySettings.green.min && accuracy <= accuracySettings.green.max) return 'green';
-    if (accuracy >= accuracySettings.yellow.min && accuracy < accuracySettings.yellow.max) return 'yellow';
-    if (accuracy >= accuracySettings.red.min && accuracy < accuracySettings.red.max) return 'red';
-    
-    return 'gray';
+  const getAccuracyColor = (accuracy: number) => {
+    if (accuracy >= 80) return '#48bb78';
+    if (accuracy >= 70) return '#d69e2e';
+    return '#e53e3e';
   };
 
   const getImportanceColor = (importance: string) => {
@@ -445,47 +455,13 @@ export default function MateriasScreen() {
     }
   };
 
-  const formatTime = (minutes: number) => {
-    if (minutes < 60) return `${Math.round(minutes)}min`;
-    const hours = Math.floor(minutes / 60);
-    const mins = Math.round(minutes % 60);
-    return `${hours}h ${mins}min`;
-  };
-
-  const filteredSubjects = subjects.filter(subject => {
-    const matchesSearch = subject.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      subject.topics.some(topic => topic.name.toLowerCase().includes(searchTerm.toLowerCase()));
-    
-    if (!matchesSearch) return false;
-    
-    if (importanceFilter === 'all') return true;
-    
-    return subject.importance === importanceFilter;
-  });
-
-  const toggleSubject = (subjectId: string) => {
-    setExpandedSubjects(prev => 
-      prev.includes(subjectId) 
-        ? prev.filter(id => id !== subjectId)
-        : [...prev, subjectId]
-    );
-  };
-
-  const openStudyModal = (subjectId: string, topicId: string) => {
-    setSelectedTopic({ subjectId, topicId });
-    setShowStudyModal(true);
-  };
-
-  const toggleRecords = (topicId: string) => {
-    setShowRecords(prev => ({
-      ...prev,
-      [topicId]: !prev[topicId]
-    }));
-  };
-
-  const saveAccuracySettings = () => {
-    setShowSettingsModal(false);
-    Alert.alert('Sucesso', 'Configurações de cores salvas!');
+  const getImportanceLabel = (importance: string) => {
+    switch (importance) {
+      case 'high': return 'Alta';
+      case 'medium': return 'Média';
+      case 'low': return 'Baixa';
+      default: return '';
+    }
   };
 
   return (
@@ -497,17 +473,7 @@ export default function MateriasScreen() {
             style={styles.compactButton}
             onPress={() => setCompactMode(!compactMode)}
           >
-            {compactMode ? (
-              <Maximize2 size={20} color="#a0aec0" />
-            ) : (
-              <Minimize2 size={20} color="#a0aec0" />
-            )}
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.settingsButton}
-            onPress={() => setShowSettingsModal(true)}
-          >
-            <Settings size={20} color="#a0aec0" />
+            {compactMode ? <Maximize2 size={20} color="#a0aec0" /> : <Minimize2 size={20} color="#a0aec0" />}
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.addButton}
@@ -518,277 +484,213 @@ export default function MateriasScreen() {
         </View>
       </View>
 
-      {/* Search and Filter */}
-      <View style={styles.searchSection}>
-        <View style={styles.searchContainer}>
-          <Search size={20} color="#a0aec0" />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Buscar matérias ou tópicos..."
-            placeholderTextColor="#a0aec0"
-            value={searchTerm}
-            onChangeText={setSearchTerm}
-          />
-        </View>
-        
-        <View style={styles.filterContainer}>
-          <TouchableOpacity
-            style={[styles.filterButton, importanceFilter === 'all' && styles.filterActive]}
-            onPress={() => setImportanceFilter('all')}
-          >
-            <Text style={styles.filterText}>Todas</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.filterButton, styles.filterHigh, importanceFilter === 'high' && styles.filterActive]}
-            onPress={() => setImportanceFilter('high')}
-          >
-            <Text style={styles.filterText}>Alta</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.filterButton, styles.filterMedium, importanceFilter === 'medium' && styles.filterActive]}
-            onPress={() => setImportanceFilter('medium')}
-          >
-            <Text style={styles.filterText}>Média</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.filterButton, styles.filterLow, importanceFilter === 'low' && styles.filterActive]}
-            onPress={() => setImportanceFilter('low')}
-          >
-            <Text style={styles.filterText}>Baixa</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {filteredSubjects.map((subject) => (
-          <View key={subject.id} style={styles.subjectCard}>
-            <TouchableOpacity
-              style={styles.subjectHeader}
-              onPress={() => toggleSubject(subject.id)}
-            >
-              <View style={styles.subjectInfo}>
-                <Text style={styles.subjectName}>{subject.name}</Text>
-                <View style={styles.subjectMeta}>
-                  <View 
-                    style={[
-                      styles.importanceBadge, 
-                      { backgroundColor: getImportanceColor(subject.importance) }
-                    ]}
-                  >
-                    <Text style={styles.importanceText}>
-                      {subject.importance === 'high' ? 'Alta' : 
-                       subject.importance === 'medium' ? 'Média' : 'Baixa'}
-                    </Text>
-                  </View>
-                  <Text style={styles.topicCount}>{subject.topics.length} tópicos</Text>
-                </View>
-              </View>
-              <View style={styles.subjectActions}>
+        {/* Search and Filters */}
+        <View style={styles.searchSection}>
+          <View style={styles.searchContainer}>
+            <Search size={20} color="#a0aec0" />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Buscar matérias ou tópicos..."
+              placeholderTextColor="#a0aec0"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+            />
+          </View>
+          
+          <View style={styles.filterContainer}>
+            <Text style={styles.filterLabel}>Importância:</Text>
+            <View style={styles.filterButtons}>
+              {[
+                { key: 'all', label: 'Todas', color: '#a0aec0' },
+                { key: 'high', label: 'Alta', color: '#e53e3e' },
+                { key: 'medium', label: 'Média', color: '#d69e2e' },
+                { key: 'low', label: 'Baixa', color: '#48bb78' }
+              ].map((filter) => (
                 <TouchableOpacity
-                  style={styles.actionButton}
-                  onPress={() => {
-                    setEditingSubject(subject);
-                    setShowEditSubjectModal(true);
-                  }}
-                >
-                  <Edit3 size={16} color="#a0aec0" />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.actionButton}
-                  onPress={() => deleteSubject(subject.id)}
-                >
-                  <Trash2 size={16} color="#e53e3e" />
-                </TouchableOpacity>
-                <ChevronRight 
-                  size={20} 
-                  color="#a0aec0" 
+                  key={filter.key}
                   style={[
-                    styles.chevron,
-                    expandedSubjects.includes(subject.id) && styles.chevronRotated
+                    styles.filterButton,
+                    importanceFilter === filter.key && styles.filterButtonActive,
+                    { borderColor: filter.color }
                   ]}
-                />
-              </View>
-            </TouchableOpacity>
-
-            {expandedSubjects.includes(subject.id) && (
-              <View style={styles.topicsContainer}>
-                {/* Horizontal Scrollable Topics */}
-                <ScrollView 
-                  horizontal 
-                  showsHorizontalScrollIndicator={false}
-                  style={styles.topicsScrollView}
-                  contentContainerStyle={styles.topicsScrollContent}
+                  onPress={() => setImportanceFilter(filter.key as ImportanceFilter)}
                 >
-                  {subject.topics
-                    .filter(topic => 
-                      searchTerm === '' || 
-                      topic.name.toLowerCase().includes(searchTerm.toLowerCase())
-                    )
-                    .map((topic) => {
-                      const color = getTopicColor(topic);
-                      const accuracy = topic.questionsTotal > 0 
-                        ? (topic.questionsCorrect / topic.questionsTotal) * 100 
-                        : 0;
+                  <View style={[styles.filterDot, { backgroundColor: filter.color }]} />
+                  <Text style={[
+                    styles.filterButtonText,
+                    importanceFilter === filter.key && styles.filterButtonTextActive
+                  ]}>
+                    {filter.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        </View>
 
-                      if (compactMode) {
-                        return (
-                          <View key={topic.id} style={styles.topicCardCompact}>
-                            <View style={styles.topicHeaderCompact}>
-                              <View 
-                                style={[
-                                  styles.colorIndicatorLarge,
-                                  color === 'red' && styles.colorRed,
-                                  color === 'yellow' && styles.colorYellow,
-                                  color === 'green' && styles.colorGreen,
-                                  color === 'gray' && styles.colorGray,
-                                ]}
-                              />
-                              <Text style={styles.topicNameCompact} numberOfLines={2}>
-                                {topic.name}
-                              </Text>
-                            </View>
-                            <View style={styles.topicActionsCompact}>
-                              <TouchableOpacity
-                                style={styles.editTopicButtonCompact}
-                                onPress={() => {
-                                  setEditingTopic({ subjectId: subject.id, topic });
-                                  setShowEditTopicModal(true);
-                                }}
-                              >
-                                <Edit3 size={12} color="#a0aec0" />
-                              </TouchableOpacity>
-                              <TouchableOpacity
-                                style={styles.deleteTopicButtonCompact}
-                                onPress={() => deleteTopic(subject.id, topic.id)}
-                              >
-                                <Trash2 size={12} color="#e53e3e" />
-                              </TouchableOpacity>
-                              <TouchableOpacity
-                                style={styles.addStudyButtonCompact}
-                                onPress={() => openStudyModal(subject.id, topic.id)}
-                              >
-                                <Plus size={12} color="#48bb78" />
-                              </TouchableOpacity>
-                            </View>
-                          </View>
-                        );
-                      }
-
-                      return (
-                        <View key={topic.id} style={styles.topicCard}>
-                          <View style={styles.topicHeader}>
-                            <View style={styles.topicInfo}>
-                              <View 
-                                style={[
-                                  styles.colorIndicator,
-                                  color === 'red' && styles.colorRed,
-                                  color === 'yellow' && styles.colorYellow,
-                                  color === 'green' && styles.colorGreen,
-                                  color === 'gray' && styles.colorGray,
-                                ]}
-                              />
-                              <Text style={styles.topicName} numberOfLines={2}>
-                                {topic.name}
-                              </Text>
-                            </View>
-                            <View style={styles.topicActions}>
-                              <TouchableOpacity
-                                style={styles.recordsToggleButton}
-                                onPress={() => toggleRecords(topic.id)}
-                              >
-                                {showRecords[topic.id] ? (
-                                  <EyeOff size={14} color="#a0aec0" />
-                                ) : (
-                                  <Eye size={14} color="#a0aec0" />
-                                )}
-                              </TouchableOpacity>
-                              <TouchableOpacity
-                                style={styles.editTopicButton}
-                                onPress={() => {
-                                  setEditingTopic({ subjectId: subject.id, topic });
-                                  setShowEditTopicModal(true);
-                                }}
-                              >
-                                <Edit3 size={14} color="#a0aec0" />
-                              </TouchableOpacity>
-                              <TouchableOpacity
-                                style={styles.deleteTopicButton}
-                                onPress={() => deleteTopic(subject.id, topic.id)}
-                              >
-                                <Trash2 size={14} color="#e53e3e" />
-                              </TouchableOpacity>
-                              <TouchableOpacity
-                                style={styles.addStudyButton}
-                                onPress={() => openStudyModal(subject.id, topic.id)}
-                              >
-                                <Plus size={14} color="#48bb78" />
-                              </TouchableOpacity>
-                            </View>
-                          </View>
-                          
-                          <View style={styles.topicStats}>
-                            <View style={styles.statItem}>
-                              <Clock size={12} color="#a0aec0" />
-                              <Text style={styles.statText}>{formatTime(topic.studyTime)}</Text>
-                            </View>
-                            <View style={styles.statItem}>
-                              <CheckCircle size={12} color="#48bb78" />
-                              <Text style={styles.statText}>
-                                {topic.questionsCorrect}/{topic.questionsTotal}
-                              </Text>
-                            </View>
-                            <View style={styles.statItem}>
-                              <Text style={styles.accuracyText}>
-                                {accuracy.toFixed(0)}%
-                              </Text>
-                            </View>
-                          </View>
-
-                          {showRecords[topic.id] && topic.studyRecords.length > 0 && (
-                            <View style={styles.recordsSection}>
-                              <Text style={styles.recordsTitle}>Registros:</Text>
-                              <ScrollView 
-                                style={styles.recordsScrollView}
-                                showsVerticalScrollIndicator={true}
-                                nestedScrollEnabled={true}
-                              >
-                                {topic.studyRecords.slice(-5).map((record) => (
-                                  <View key={record.id} style={styles.recordItem}>
-                                    <Text style={styles.recordDate}>
-                                      {record.date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}
-                                    </Text>
-                                    <Text style={styles.recordDetails}>
-                                      {formatTime(record.studyTime)} • {record.questionsCorrect}/{record.questionsTotal}
-                                    </Text>
-                                  </View>
-                                ))}
-                              </ScrollView>
-                            </View>
-                          )}
-                        </View>
-                      );
-                    })}
-                  
-                  {/* Add Topic Button */}
+        {/* Subjects */}
+        <View style={styles.subjectsSection}>
+          {filteredSubjects.length === 0 ? (
+            <View style={styles.emptyState}>
+              <BookOpen size={48} color="#4a5568" />
+              <Text style={styles.emptyText}>Nenhuma matéria encontrada</Text>
+              <Text style={styles.emptySubtext}>Adicione uma nova matéria para começar</Text>
+            </View>
+          ) : (
+            filteredSubjects.map((subject) => (
+              <View key={subject.id} style={styles.subjectCard}>
+                <View style={styles.subjectHeader}>
+                  <View style={styles.subjectInfo}>
+                    <Text style={styles.subjectName}>{subject.name}</Text>
+                    <View style={styles.subjectMeta}>
+                      <View style={[styles.importanceBadge, { backgroundColor: getImportanceColor(subject.importance) }]}>
+                        <Text style={styles.importanceText}>{getImportanceLabel(subject.importance)}</Text>
+                      </View>
+                      <Text style={styles.topicCount}>{subject.topics.length} tópicos</Text>
+                    </View>
+                  </View>
                   <TouchableOpacity
-                    style={compactMode ? styles.addTopicCardCompact : styles.addTopicCard}
+                    style={styles.addTopicButton}
                     onPress={() => {
-                      const topicName = prompt('Nome do novo tópico:');
-                      if (topicName) {
-                        addTopicToSubject(subject.id, topicName);
-                      }
+                      setSelectedSubject(subject);
+                      setShowTopicModal(true);
                     }}
                   >
-                    <Plus size={compactMode ? 16 : 20} color="#48bb78" />
-                    <Text style={compactMode ? styles.addTopicTextCompact : styles.addTopicText}>
-                      {compactMode ? 'Novo' : 'Novo Tópico'}
-                    </Text>
+                    <Plus size={16} color="#ffffff" />
                   </TouchableOpacity>
-                </ScrollView>
+                </View>
+
+                {/* Topics */}
+                <View style={styles.topicsContainer}>
+                  {subject.topics.length === 0 ? (
+                    <View style={styles.emptyTopics}>
+                      <Text style={styles.emptyTopicsText}>Nenhum tópico adicionado</Text>
+                    </View>
+                  ) : (
+                    <ScrollView 
+                      horizontal 
+                      showsHorizontalScrollIndicator={false}
+                      contentContainerStyle={styles.topicsScrollContent}
+                    >
+                      {subject.topics.map((topic) => (
+                        <View key={topic.id} style={[
+                          styles.topicCard,
+                          compactMode && styles.topicCardCompact
+                        ]}>
+                          {!compactMode && (
+                            <>
+                              <View style={styles.topicHeader}>
+                                <Text style={styles.topicName} numberOfLines={2}>{topic.name}</Text>
+                                <View style={styles.topicActions}>
+                                  <TouchableOpacity
+                                    style={styles.topicActionButton}
+                                    onPress={() => {
+                                      setSelectedSubject(subject);
+                                      setSelectedTopic(topic);
+                                      setShowRecordModal(true);
+                                    }}
+                                  >
+                                    <Edit3 size={12} color="#a0aec0" />
+                                  </TouchableOpacity>
+                                  <TouchableOpacity
+                                    style={styles.topicActionButton}
+                                    onPress={() => deleteTopic(subject.id, topic.id)}
+                                  >
+                                    <Trash2 size={12} color="#e53e3e" />
+                                  </TouchableOpacity>
+                                </View>
+                              </View>
+
+                              <View style={styles.topicStats}>
+                                <View style={styles.statItem}>
+                                  <Clock size={12} color="#a0aec0" />
+                                  <Text style={styles.statText}>{formatTime(topic.totalTime)}</Text>
+                                </View>
+                                <View style={styles.statItem}>
+                                  <Target size={12} color="#a0aec0" />
+                                  <Text style={styles.statText}>{topic.questionsCorrect}/{topic.questionsAnswered}</Text>
+                                </View>
+                              </View>
+
+                              <View style={styles.accuracyContainer}>
+                                <Text style={[styles.accuracyText, { color: getAccuracyColor(topic.accuracy) }]}>
+                                  {topic.accuracy.toFixed(1)}%
+                                </Text>
+                              </View>
+
+                              {/* Study Records */}
+                              {topic.records.length > 0 && (
+                                <View style={styles.recordsContainer}>
+                                  <Text style={styles.recordsTitle}>Registros:</Text>
+                                  <ScrollView style={styles.recordsList} nestedScrollEnabled>
+                                    {topic.records.slice(-3).map((record) => (
+                                      <View key={record.id} style={styles.recordItem}>
+                                        <Text style={styles.recordDate}>
+                                          {record.date.toLocaleDateString('pt-BR')}
+                                        </Text>
+                                        <Text style={styles.recordStats}>
+                                          {formatTime(record.timeSpent)} • {record.questionsCorrect}/{record.questionsAnswered}
+                                        </Text>
+                                        {record.notes && (
+                                          <Text style={styles.recordNotes} numberOfLines={2}>
+                                            {record.notes}
+                                          </Text>
+                                        )}
+                                      </View>
+                                    ))}
+                                  </ScrollView>
+                                </View>
+                              )}
+
+                              <View style={styles.topicControls}>
+                                <TouchableOpacity
+                                  style={[styles.controlButton, styles.playButton]}
+                                  onPress={() => handleTopicControl(subject.id, topic.id, topic.isRunning ? 'pause' : 'start')}
+                                >
+                                  {topic.isRunning ? (
+                                    <Pause size={14} color="#ffffff" />
+                                  ) : (
+                                    <Play size={14} color="#ffffff" />
+                                  )}
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                  style={[styles.controlButton, styles.stopButton]}
+                                  onPress={() => handleTopicControl(subject.id, topic.id, 'stop')}
+                                >
+                                  <Square size={14} color="#ffffff" />
+                                </TouchableOpacity>
+                              </View>
+                            </>
+                          )}
+
+                          {compactMode && (
+                            <>
+                              <Text style={styles.topicNameCompact} numberOfLines={1}>{topic.name}</Text>
+                              <View style={[styles.accuracyDot, { backgroundColor: getAccuracyColor(topic.accuracy) }]} />
+                              <View style={styles.topicControlsCompact}>
+                                <TouchableOpacity
+                                  style={styles.compactControlButton}
+                                  onPress={() => handleTopicControl(subject.id, topic.id, topic.isRunning ? 'pause' : 'start')}
+                                >
+                                  {topic.isRunning ? (
+                                    <Pause size={12} color="#ffffff" />
+                                  ) : (
+                                    <Play size={12} color="#ffffff" />
+                                  )}
+                                </TouchableOpacity>
+                              </View>
+                            </>
+                          )}
+                        </View>
+                      ))}
+                    </ScrollView>
+                  )}
+                </View>
               </View>
-            )}
-          </View>
-        ))}
+            ))
+          )}
+        </View>
       </ScrollView>
 
       {/* Add Subject Modal */}
@@ -799,377 +701,182 @@ export default function MateriasScreen() {
         onRequestClose={() => setShowAddModal(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Adicionar Matérias</Text>
-            <Text style={styles.modalSubtitle}>
-              Formato: MATÉRIA:ASSUNTO,ASSUNTO;MATÉRIA...
-            </Text>
-            <Text style={styles.modalExample}>
-              Exemplo: Direito:Constitucional,Administrativo;Matemática:Álgebra,Geometria
-            </Text>
-            
-            <TextInput
-              style={styles.modalInput}
-              multiline
-              numberOfLines={4}
-              placeholder="Digite as matérias e assuntos..."
-              placeholderTextColor="#a0aec0"
-              value={newSubjectText}
-              onChangeText={setNewSubjectText}
-            />
-            
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton]}
-                onPress={() => setShowAddModal(false)}
-              >
-                <Text style={styles.cancelButtonText}>Cancelar</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.addModalButton]}
-                onPress={addSubjects}
-              >
-                <Text style={styles.addButtonText}>Adicionar</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Edit Subject Modal */}
-      <Modal
-        visible={showEditSubjectModal}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setShowEditSubjectModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Editar Matéria</Text>
-            
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Nome da matéria</Text>
+          <View style={[styles.modalContent, { maxHeight: screenHeight * 0.8 }]}>
+            <ScrollView showsVerticalScrollIndicator={false}>
+              <Text style={styles.modalTitle}>Nova Matéria</Text>
+              
               <TextInput
                 style={styles.modalInput}
-                value={editingSubject?.name || ''}
-                onChangeText={(text) => setEditingSubject(prev => prev ? { ...prev, name: text } : null)}
                 placeholder="Nome da matéria"
                 placeholderTextColor="#a0aec0"
+                value={newSubject.name}
+                onChangeText={(text) => setNewSubject(prev => ({ ...prev, name: text }))}
               />
-            </View>
 
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Prioridade</Text>
-              <View style={styles.priorityButtons}>
-                {['high', 'medium', 'low'].map((priority) => (
+              <Text style={styles.inputLabel}>Importância:</Text>
+              <View style={styles.importanceOptions}>
+                {[
+                  { key: 'high', label: 'Alta', color: '#e53e3e' },
+                  { key: 'medium', label: 'Média', color: '#d69e2e' },
+                  { key: 'low', label: 'Baixa', color: '#48bb78' }
+                ].map((option) => (
                   <TouchableOpacity
-                    key={priority}
+                    key={option.key}
                     style={[
-                      styles.priorityButton,
-                      editingSubject?.importance === priority && styles.priorityButtonActive,
-                      priority === 'high' && styles.highPriority,
-                      priority === 'medium' && styles.mediumPriority,
-                      priority === 'low' && styles.lowPriority,
+                      styles.importanceOption,
+                      newSubject.importance === option.key && styles.importanceOptionActive,
+                      { borderColor: option.color }
                     ]}
-                    onPress={() => setEditingSubject(prev => prev ? { 
-                      ...prev, 
-                      importance: priority as 'high' | 'medium' | 'low' 
-                    } : null)}
+                    onPress={() => setNewSubject(prev => ({ ...prev, importance: option.key as any }))}
                   >
-                    <Text style={styles.priorityButtonText}>
-                      {priority === 'high' ? 'Alta' : priority === 'medium' ? 'Média' : 'Baixa'}
+                    <View style={[styles.importanceOptionDot, { backgroundColor: option.color }]} />
+                    <Text style={[
+                      styles.importanceOptionText,
+                      newSubject.importance === option.key && styles.importanceOptionTextActive
+                    ]}>
+                      {option.label}
                     </Text>
                   </TouchableOpacity>
                 ))}
               </View>
-            </View>
-            
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton]}
-                onPress={() => setShowEditSubjectModal(false)}
-              >
-                <Text style={styles.cancelButtonText}>Cancelar</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.addModalButton]}
-                onPress={updateSubject}
-              >
-                <Text style={styles.addButtonText}>Salvar</Text>
-              </TouchableOpacity>
-            </View>
+              
+              <View style={styles.modalButtons}>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.cancelButton]}
+                  onPress={() => setShowAddModal(false)}
+                >
+                  <Text style={styles.cancelButtonText}>Cancelar</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.saveButton]}
+                  onPress={addSubject}
+                >
+                  <Text style={styles.saveButtonText}>Adicionar</Text>
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
           </View>
         </View>
       </Modal>
 
-      {/* Edit Topic Modal */}
+      {/* Add Topic Modal */}
       <Modal
-        visible={showEditTopicModal}
+        visible={showTopicModal}
         animationType="slide"
         transparent={true}
-        onRequestClose={() => setShowEditTopicModal(false)}
+        onRequestClose={() => setShowTopicModal(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Editar Tópico</Text>
-            
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Nome do tópico</Text>
+          <View style={[styles.modalContent, { maxHeight: screenHeight * 0.6 }]}>
+            <ScrollView showsVerticalScrollIndicator={false}>
+              <Text style={styles.modalTitle}>Novo Tópico</Text>
+              <Text style={styles.modalSubtitle}>
+                {selectedSubject?.name}
+              </Text>
+              
               <TextInput
                 style={styles.modalInput}
-                value={editingTopic?.topic.name || ''}
-                onChangeText={(text) => setEditingTopic(prev => prev ? { 
-                  ...prev, 
-                  topic: { ...prev.topic, name: text } 
-                } : null)}
                 placeholder="Nome do tópico"
                 placeholderTextColor="#a0aec0"
+                value={newTopic.name}
+                onChangeText={(text) => setNewTopic({ name: text })}
               />
-            </View>
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Dificuldade</Text>
-              <View style={styles.priorityButtons}>
-                {['easy', 'medium', 'hard'].map((difficulty) => (
-                  <TouchableOpacity
-                    key={difficulty}
-                    style={[
-                      styles.priorityButton,
-                      editingTopic?.topic.difficulty === difficulty && styles.priorityButtonActive,
-                      difficulty === 'easy' && styles.lowPriority,
-                      difficulty === 'medium' && styles.mediumPriority,
-                      difficulty === 'hard' && styles.highPriority,
-                    ]}
-                    onPress={() => setEditingTopic(prev => prev ? { 
-                      ...prev, 
-                      topic: { ...prev.topic, difficulty: difficulty as 'easy' | 'medium' | 'hard' } 
-                    } : null)}
-                  >
-                    <Text style={styles.priorityButtonText}>
-                      {difficulty === 'easy' ? 'Fácil' : difficulty === 'medium' ? 'Médio' : 'Difícil'}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
+              
+              <View style={styles.modalButtons}>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.cancelButton]}
+                  onPress={() => setShowTopicModal(false)}
+                >
+                  <Text style={styles.cancelButtonText}>Cancelar</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.saveButton]}
+                  onPress={addTopic}
+                >
+                  <Text style={styles.saveButtonText}>Adicionar</Text>
+                </TouchableOpacity>
               </View>
-            </View>
-            
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton]}
-                onPress={() => setShowEditTopicModal(false)}
-              >
-                <Text style={styles.cancelButtonText}>Cancelar</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.addModalButton]}
-                onPress={updateTopic}
-              >
-                <Text style={styles.addButtonText}>Salvar</Text>
-              </TouchableOpacity>
-            </View>
+            </ScrollView>
           </View>
         </View>
       </Modal>
 
-      {/* Study Record Modal */}
+      {/* Add Record Modal */}
       <Modal
-        visible={showStudyModal}
+        visible={showRecordModal}
         animationType="slide"
         transparent={true}
-        onRequestClose={() => setShowStudyModal(false)}
+        onRequestClose={() => setShowRecordModal(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Registrar Estudo</Text>
-            
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Data do estudo</Text>
-              <TextInput
-                style={styles.modalInput}
-                value={studyRecord.date}
-                onChangeText={(text) => setStudyRecord(prev => ({ ...prev, date: text }))}
-                placeholder="YYYY-MM-DD"
-                placeholderTextColor="#a0aec0"
-              />
-            </View>
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Tempo estudado (minutos)</Text>
-              <TextInput
-                style={styles.modalInput}
-                value={studyRecord.studyTime.toString()}
-                onChangeText={(text) => setStudyRecord(prev => ({ ...prev, studyTime: parseInt(text) || 0 }))}
-                keyboardType="numeric"
-                placeholder="0"
-                placeholderTextColor="#a0aec0"
-              />
-            </View>
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Questões resolvidas</Text>
-              <TextInput
-                style={styles.modalInput}
-                value={studyRecord.questionsTotal.toString()}
-                onChangeText={(text) => setStudyRecord(prev => ({ ...prev, questionsTotal: parseInt(text) || 0 }))}
-                keyboardType="numeric"
-                placeholder="0"
-                placeholderTextColor="#a0aec0"
-              />
-            </View>
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Questões certas</Text>
-              <TextInput
-                style={styles.modalInput}
-                value={studyRecord.questionsCorrect.toString()}
-                onChangeText={(text) => setStudyRecord(prev => ({ ...prev, questionsCorrect: parseInt(text) || 0 }))}
-                keyboardType="numeric"
-                placeholder="0"
-                placeholderTextColor="#a0aec0"
-              />
-            </View>
-            
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton]}
-                onPress={() => setShowStudyModal(false)}
-              >
-                <Text style={styles.cancelButtonText}>Cancelar</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.addModalButton]}
-                onPress={addStudyRecord}
-              >
-                <Text style={styles.addButtonText}>Registrar</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Settings Modal */}
-      <Modal
-        visible={showSettingsModal}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setShowSettingsModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Configurações de Cores</Text>
-            <Text style={styles.modalSubtitle}>
-              Configure as faixas de porcentagem para cada cor
-            </Text>
-            
-            <View style={styles.colorSettingsSection}>
-              <View style={styles.colorSetting}>
-                <View style={styles.colorHeader}>
-                  <View style={[styles.colorDot, styles.colorRed]} />
-                  <Text style={styles.colorLabel}>Vermelho (Baixo desempenho)</Text>
-                </View>
-                <View style={styles.rangeInputs}>
+          <View style={[styles.modalContent, { maxHeight: screenHeight * 0.8 }]}>
+            <ScrollView showsVerticalScrollIndicator={false}>
+              <Text style={styles.modalTitle}>Registrar Estudo</Text>
+              <Text style={styles.modalSubtitle}>
+                {selectedSubject?.name} - {selectedTopic?.name}
+              </Text>
+              
+              <View style={styles.inputRow}>
+                <View style={styles.inputContainer}>
+                  <Text style={styles.inputLabel}>Tempo (min)</Text>
                   <TextInput
-                    style={styles.rangeInput}
-                    value={accuracySettings.red.min.toString()}
-                    onChangeText={(text) => setAccuracySettings(prev => ({
-                      ...prev,
-                      red: { ...prev.red, min: parseInt(text) || 0 }
-                    }))}
-                    keyboardType="numeric"
+                    style={styles.modalInput}
                     placeholder="0"
-                  />
-                  <Text style={styles.rangeText}>até</Text>
-                  <TextInput
-                    style={styles.rangeInput}
-                    value={accuracySettings.red.max.toString()}
-                    onChangeText={(text) => setAccuracySettings(prev => ({
-                      ...prev,
-                      red: { ...prev.red, max: parseInt(text) || 70 }
-                    }))}
+                    placeholderTextColor="#a0aec0"
                     keyboardType="numeric"
-                    placeholder="70"
+                    value={newRecord.timeSpent}
+                    onChangeText={(text) => setNewRecord(prev => ({ ...prev, timeSpent: text }))}
                   />
-                  <Text style={styles.rangeText}>%</Text>
+                </View>
+                <View style={styles.inputContainer}>
+                  <Text style={styles.inputLabel}>Questões</Text>
+                  <TextInput
+                    style={styles.modalInput}
+                    placeholder="0"
+                    placeholderTextColor="#a0aec0"
+                    keyboardType="numeric"
+                    value={newRecord.questionsAnswered}
+                    onChangeText={(text) => setNewRecord(prev => ({ ...prev, questionsAnswered: text }))}
+                  />
                 </View>
               </View>
 
-              <View style={styles.colorSetting}>
-                <View style={styles.colorHeader}>
-                  <View style={[styles.colorDot, styles.colorYellow]} />
-                  <Text style={styles.colorLabel}>Amarelo (Médio desempenho)</Text>
-                </View>
-                <View style={styles.rangeInputs}>
-                  <TextInput
-                    style={styles.rangeInput}
-                    value={accuracySettings.yellow.min.toString()}
-                    onChangeText={(text) => setAccuracySettings(prev => ({
-                      ...prev,
-                      yellow: { ...prev.yellow, min: parseInt(text) || 70 }
-                    }))}
-                    keyboardType="numeric"
-                    placeholder="70"
-                  />
-                  <Text style={styles.rangeText}>até</Text>
-                  <TextInput
-                    style={styles.rangeInput}
-                    value={accuracySettings.yellow.max.toString()}
-                    onChangeText={(text) => setAccuracySettings(prev => ({
-                      ...prev,
-                      yellow: { ...prev.yellow, max: parseInt(text) || 80 }
-                    }))}
-                    keyboardType="numeric"
-                    placeholder="80"
-                  />
-                  <Text style={styles.rangeText}>%</Text>
-                </View>
-              </View>
+              <Text style={styles.inputLabel}>Questões Corretas</Text>
+              <TextInput
+                style={styles.modalInput}
+                placeholder="0"
+                placeholderTextColor="#a0aec0"
+                keyboardType="numeric"
+                value={newRecord.questionsCorrect}
+                onChangeText={(text) => setNewRecord(prev => ({ ...prev, questionsCorrect: text }))}
+              />
 
-              <View style={styles.colorSetting}>
-                <View style={styles.colorHeader}>
-                  <View style={[styles.colorDot, styles.colorGreen]} />
-                  <Text style={styles.colorLabel}>Verde (Alto desempenho)</Text>
-                </View>
-                <View style={styles.rangeInputs}>
-                  <TextInput
-                    style={styles.rangeInput}
-                    value={accuracySettings.green.min.toString()}
-                    onChangeText={(text) => setAccuracySettings(prev => ({
-                      ...prev,
-                      green: { ...prev.green, min: parseInt(text) || 80 }
-                    }))}
-                    keyboardType="numeric"
-                    placeholder="80"
-                  />
-                  <Text style={styles.rangeText}>até</Text>
-                  <TextInput
-                    style={styles.rangeInput}
-                    value={accuracySettings.green.max.toString()}
-                    onChangeText={(text) => setAccuracySettings(prev => ({
-                      ...prev,
-                      green: { ...prev.green, max: parseInt(text) || 100 }
-                    }))}
-                    keyboardType="numeric"
-                    placeholder="100"
-                  />
-                  <Text style={styles.rangeText}>%</Text>
-                </View>
+              <Text style={styles.inputLabel}>Observações (opcional)</Text>
+              <TextInput
+                style={[styles.modalInput, styles.textArea]}
+                placeholder="Adicione suas observações..."
+                placeholderTextColor="#a0aec0"
+                multiline
+                numberOfLines={3}
+                value={newRecord.notes}
+                onChangeText={(text) => setNewRecord(prev => ({ ...prev, notes: text }))}
+              />
+              
+              <View style={styles.modalButtons}>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.cancelButton]}
+                  onPress={() => setShowRecordModal(false)}
+                >
+                  <Text style={styles.cancelButtonText}>Cancelar</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.saveButton]}
+                  onPress={addRecord}
+                >
+                  <Text style={styles.saveButtonText}>Registrar</Text>
+                </TouchableOpacity>
               </View>
-            </View>
-            
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton]}
-                onPress={() => setShowSettingsModal(false)}
-              >
-                <Text style={styles.cancelButtonText}>Cancelar</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.addModalButton]}
-                onPress={saveAccuracySettings}
-              >
-                <Text style={styles.addButtonText}>Salvar</Text>
-              </TouchableOpacity>
-            </View>
+            </ScrollView>
           </View>
         </View>
       </Modal>
@@ -1195,18 +902,10 @@ const styles = StyleSheet.create({
   },
   headerActions: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 8,
   },
   compactButton: {
-    backgroundColor: '#4a5568',
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  settingsButton: {
-    backgroundColor: '#4a5568',
+    backgroundColor: '#2d3748',
     width: 40,
     height: 40,
     borderRadius: 20,
@@ -1221,9 +920,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  content: {
+    flex: 1,
+  },
   searchSection: {
-    paddingHorizontal: 20,
-    marginBottom: 20,
+    padding: 20,
+    paddingBottom: 10,
   },
   searchContainer: {
     flexDirection: 'row',
@@ -1232,59 +934,86 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 12,
-    marginBottom: 12,
+    marginBottom: 16,
   },
   searchInput: {
     flex: 1,
-    marginLeft: 10,
     color: '#ffffff',
     fontSize: 16,
+    marginLeft: 12,
   },
   filterContainer: {
+    marginBottom: 8,
+  },
+  filterLabel: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  filterButtons: {
     flexDirection: 'row',
     gap: 8,
   },
   filterButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 16,
-    backgroundColor: '#2d3748',
     borderWidth: 1,
-    borderColor: '#4a5568',
+    backgroundColor: '#2d3748',
   },
-  filterActive: {
-    backgroundColor: '#48bb78',
-    borderColor: '#48bb78',
+  filterButtonActive: {
+    backgroundColor: '#4a5568',
   },
-  filterHigh: {
-    backgroundColor: '#742a2a',
+  filterDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: 6,
   },
-  filterMedium: {
-    backgroundColor: '#744210',
-  },
-  filterLow: {
-    backgroundColor: '#22543d',
-  },
-  filterText: {
-    color: '#ffffff',
+  filterButtonText: {
+    color: '#a0aec0',
     fontSize: 12,
     fontWeight: '600',
   },
-  content: {
-    flex: 1,
-    paddingHorizontal: 20,
+  filterButtonTextActive: {
+    color: '#ffffff',
+  },
+  subjectsSection: {
+    padding: 20,
+    paddingTop: 10,
+  },
+  emptyState: {
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  emptyText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#4a5568',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: '#4a5568',
+    textAlign: 'center',
   },
   subjectCard: {
     backgroundColor: '#2d3748',
     borderRadius: 16,
+    padding: 16,
     marginBottom: 16,
     borderWidth: 1,
     borderColor: '#4a5568',
   },
   subjectHeader: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 16,
+    marginBottom: 16,
   },
   subjectInfo: {
     flex: 1,
@@ -1314,135 +1043,74 @@ const styles = StyleSheet.create({
     color: '#a0aec0',
     fontSize: 14,
   },
-  subjectActions: {
-    flexDirection: 'row',
+  addTopicButton: {
+    backgroundColor: '#48bb78',
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
     alignItems: 'center',
-    gap: 8,
-  },
-  actionButton: {
-    padding: 8,
-  },
-  chevron: {
-    transform: [{ rotate: '0deg' }],
-  },
-  chevronRotated: {
-    transform: [{ rotate: '90deg' }],
   },
   topicsContainer: {
-    paddingHorizontal: 16,
-    paddingBottom: 16,
+    minHeight: 120,
   },
-  topicsScrollView: {
-    marginHorizontal: -8,
+  emptyTopics: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+  },
+  emptyTopicsText: {
+    color: '#4a5568',
+    fontSize: 14,
   },
   topicsScrollContent: {
-    paddingHorizontal: 8,
-    gap: 12,
+    paddingRight: 16,
   },
   topicCard: {
     backgroundColor: '#1a202c',
     borderRadius: 12,
     padding: 12,
+    marginRight: 12,
+    width: 200,
     borderWidth: 1,
     borderColor: '#4a5568',
-    width: 200,
-    minHeight: 140,
   },
   topicCardCompact: {
-    backgroundColor: '#1a202c',
-    borderRadius: 12,
-    padding: 8,
-    borderWidth: 1,
-    borderColor: '#4a5568',
     width: 120,
-    minHeight: 80,
+    height: 80,
     justifyContent: 'space-between',
   },
   topicHeader: {
-    marginBottom: 8,
-  },
-  topicHeaderCompact: {
     flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  topicInfo: {
-    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'flex-start',
     marginBottom: 8,
   },
-  colorIndicator: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginRight: 8,
-    marginTop: 4,
-  },
-  colorIndicatorLarge: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    marginRight: 6,
-  },
-  colorRed: {
-    backgroundColor: '#e53e3e',
-  },
-  colorYellow: {
-    backgroundColor: '#d69e2e',
-  },
-  colorGreen: {
-    backgroundColor: '#48bb78',
-  },
-  colorGray: {
-    backgroundColor: '#a0aec0',
-  },
   topicName: {
-    color: '#ffffff',
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: 'bold',
+    color: '#ffffff',
     flex: 1,
-    lineHeight: 18,
+    marginRight: 8,
   },
   topicNameCompact: {
-    color: '#ffffff',
     fontSize: 12,
-    fontWeight: '600',
-    flex: 1,
-    lineHeight: 14,
+    fontWeight: 'bold',
+    color: '#ffffff',
+    marginBottom: 4,
   },
   topicActions: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    gap: 4,
   },
-  topicActionsCompact: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  recordsToggleButton: {
-    padding: 2,
-  },
-  editTopicButton: {
-    padding: 2,
-  },
-  editTopicButtonCompact: {
-    padding: 1,
-  },
-  deleteTopicButton: {
-    padding: 2,
-  },
-  deleteTopicButtonCompact: {
-    padding: 1,
-  },
-  addStudyButton: {
-    padding: 2,
-  },
-  addStudyButtonCompact: {
-    padding: 1,
+  topicActionButton: {
+    padding: 4,
+    borderRadius: 4,
+    backgroundColor: '#2d3748',
   },
   topicStats: {
-    gap: 6,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     marginBottom: 8,
   },
   statItem: {
@@ -1452,81 +1120,84 @@ const styles = StyleSheet.create({
   },
   statText: {
     color: '#a0aec0',
-    fontSize: 11,
+    fontSize: 12,
+  },
+  accuracyContainer: {
+    alignItems: 'center',
+    marginBottom: 8,
   },
   accuracyText: {
-    color: '#48bb78',
-    fontSize: 12,
+    fontSize: 16,
     fontWeight: 'bold',
   },
-  recordsSection: {
-    marginTop: 8,
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: '#4a5568',
+  accuracyDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    marginBottom: 4,
+  },
+  recordsContainer: {
+    marginBottom: 12,
   },
   recordsTitle: {
-    color: '#a0aec0',
-    fontSize: 10,
-    marginBottom: 6,
+    color: '#ffffff',
+    fontSize: 12,
     fontWeight: 'bold',
+    marginBottom: 6,
   },
-  recordsScrollView: {
+  recordsList: {
     maxHeight: 60,
   },
   recordItem: {
-    paddingVertical: 2,
-    paddingHorizontal: 4,
     backgroundColor: '#2d3748',
-    borderRadius: 4,
-    marginBottom: 2,
+    borderRadius: 6,
+    padding: 6,
+    marginBottom: 4,
   },
   recordDate: {
-    color: '#a0aec0',
-    fontSize: 9,
-    fontWeight: '600',
-  },
-  recordDetails: {
-    color: '#e2e8f0',
-    fontSize: 9,
-  },
-  addTopicCard: {
-    backgroundColor: '#1a202c',
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 2,
-    borderColor: '#48bb78',
-    borderStyle: 'dashed',
-    width: 120,
-    minHeight: 140,
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 8,
-  },
-  addTopicCardCompact: {
-    backgroundColor: '#1a202c',
-    borderRadius: 12,
-    padding: 8,
-    borderWidth: 2,
-    borderColor: '#48bb78',
-    borderStyle: 'dashed',
-    width: 80,
-    minHeight: 80,
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 4,
-  },
-  addTopicText: {
-    color: '#48bb78',
-    fontSize: 12,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  addTopicTextCompact: {
     color: '#48bb78',
     fontSize: 10,
-    fontWeight: '600',
-    textAlign: 'center',
+    fontWeight: 'bold',
+  },
+  recordStats: {
+    color: '#a0aec0',
+    fontSize: 10,
+    marginTop: 2,
+  },
+  recordNotes: {
+    color: '#e2e8f0',
+    fontSize: 10,
+    marginTop: 2,
+    fontStyle: 'italic',
+  },
+  topicControls: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  topicControlsCompact: {
+    alignItems: 'center',
+  },
+  controlButton: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  compactControlButton: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#48bb78',
+  },
+  playButton: {
+    backgroundColor: '#48bb78',
+  },
+  stopButton: {
+    backgroundColor: '#e53e3e',
   },
   modalOverlay: {
     flex: 1,
@@ -1541,27 +1212,19 @@ const styles = StyleSheet.create({
     padding: 24,
     width: '100%',
     maxWidth: 400,
-    maxHeight: '90%',
   },
   modalTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     color: '#ffffff',
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: 8,
   },
   modalSubtitle: {
     fontSize: 14,
     color: '#a0aec0',
     textAlign: 'center',
-    marginBottom: 4,
-  },
-  modalExample: {
-    fontSize: 12,
-    color: '#48bb78',
-    textAlign: 'center',
     marginBottom: 20,
-    fontStyle: 'italic',
   },
   modalInput: {
     backgroundColor: '#1a202c',
@@ -1571,8 +1234,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginBottom: 16,
   },
-  inputGroup: {
-    marginBottom: 16,
+  textArea: {
+    height: 80,
+    textAlignVertical: 'top',
   },
   inputLabel: {
     color: '#ffffff',
@@ -1580,79 +1244,49 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: 8,
   },
-  priorityButtons: {
+  inputRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  inputContainer: {
+    flex: 1,
+  },
+  importanceOptions: {
     flexDirection: 'row',
     gap: 8,
+    marginBottom: 20,
   },
-  priorityButton: {
+  importanceOption: {
     flex: 1,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: 'transparent',
-  },
-  priorityButtonActive: {
-    borderColor: '#48bb78',
-  },
-  highPriority: {
-    backgroundColor: '#e53e3e',
-  },
-  mediumPriority: {
-    backgroundColor: '#d69e2e',
-  },
-  lowPriority: {
-    backgroundColor: '#48bb78',
-  },
-  priorityButtonText: {
-    color: '#ffffff',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  colorSettingsSection: {
-    marginBottom: 20,
-  },
-  colorSetting: {
-    marginBottom: 20,
-  },
-  colorHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    backgroundColor: '#1a202c',
   },
-  colorDot: {
+  importanceOptionActive: {
+    backgroundColor: '#4a5568',
+  },
+  importanceOptionDot: {
     width: 12,
     height: 12,
     borderRadius: 6,
     marginRight: 8,
   },
-  colorLabel: {
-    color: '#ffffff',
+  importanceOptionText: {
+    color: '#a0aec0',
     fontSize: 14,
     fontWeight: '600',
   },
-  rangeInputs: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  rangeInput: {
-    backgroundColor: '#1a202c',
-    borderRadius: 8,
-    padding: 8,
+  importanceOptionTextActive: {
     color: '#ffffff',
-    fontSize: 14,
-    width: 60,
-    textAlign: 'center',
-  },
-  rangeText: {
-    color: '#a0aec0',
-    fontSize: 14,
   },
   modalButtons: {
     flexDirection: 'row',
     gap: 12,
+    marginTop: 20,
   },
   modalButton: {
     flex: 1,
@@ -1663,14 +1297,14 @@ const styles = StyleSheet.create({
   cancelButton: {
     backgroundColor: '#4a5568',
   },
-  addModalButton: {
+  saveButton: {
     backgroundColor: '#48bb78',
   },
   cancelButtonText: {
     color: '#ffffff',
     fontWeight: '600',
   },
-  addButtonText: {
+  saveButtonText: {
     color: '#ffffff',
     fontWeight: '600',
   },

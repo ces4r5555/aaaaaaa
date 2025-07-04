@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Modal, TextInput, Alert, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Modal, TextInput, Alert, StyleSheet, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Plus, Search, ChevronRight, Clock, CircleCheck as CheckCircle, Circle, Filter, CreditCard as Edit3, Calendar, Eye, EyeOff, Trash2, Settings } from 'lucide-react-native';
+
+const { height: screenHeight } = Dimensions.get('window');
 
 interface SimuladoResult {
   subject: string;
@@ -378,7 +380,7 @@ export default function SimuladosScreen() {
         }}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
+          <View style={[styles.modalContainer, { maxHeight: screenHeight * 0.9 }]}>
             <ScrollView 
               style={styles.modalScrollView}
               contentContainerStyle={styles.modalScrollContent}
@@ -521,10 +523,10 @@ export default function SimuladosScreen() {
         onRequestClose={() => setShowSubjectModal(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.subjectModalContent}>
+          <View style={[styles.subjectModalContent, { maxHeight: screenHeight * 0.8 }]}>
             <Text style={styles.modalTitle}>Selecionar Matéria</Text>
             
-            <ScrollView style={styles.subjectList}>
+            <ScrollView style={styles.subjectList} showsVerticalScrollIndicator={false}>
               {existingSubjects.map((subject) => (
                 <TouchableOpacity
                   key={subject.id}
@@ -768,7 +770,6 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     width: '100%',
     maxWidth: 400,
-    maxHeight: '85%',
   },
   modalScrollView: {
     flex: 1,
@@ -785,7 +786,6 @@ const styles = StyleSheet.create({
     padding: 24,
     width: '100%',
     maxWidth: 400,
-    maxHeight: '80%',
   },
   modalTitle: {
     fontSize: 20,
