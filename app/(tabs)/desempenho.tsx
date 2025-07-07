@@ -232,7 +232,6 @@ export default function DesempenhoScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Análise de Desempenho</Text>
-        <Text style={styles.subtitle}>Acompanhe sua evolução nos estudos</Text>
       </View>
 
       {/* Period Selector - Collapsible */}
